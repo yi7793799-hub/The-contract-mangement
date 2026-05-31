@@ -668,7 +668,7 @@ class ImportController
 
     private function getContractTypes(): array
     {
-        $stmt = db()->query("SELECT id, name FROM contract_types WHERE status = 'active' ORDER BY name");
+        $stmt = db()->query("SELECT id, name FROM contract_types ORDER BY name");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
