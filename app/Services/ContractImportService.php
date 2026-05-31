@@ -43,7 +43,7 @@ class ContractImportService
 
         // 4. 逐个处理文件
         foreach ($files as $file) {
-            $this->processFile($file, $jobId);
+            $this->processFile($file, $jobId, $userId);
         }
 
         // 5. 更新任务完成状态
@@ -94,7 +94,7 @@ class ContractImportService
     /**
      * 处理单个文件
      */
-    public function processFile(string $filePath, int $jobId): void
+    public function processFile(string $filePath, int $jobId, int $userId): void
     {
         // 1. 保存文件记录
         $fileId = $this->createFileRecord($filePath, $jobId);
@@ -112,7 +112,7 @@ class ContractImportService
             $confidence = $this->calculateConfidence($fields['confidence'] ?? []);
 
             // 5. 保存合同
-            $contractId = $this->createContract($fields, $text, $confidence, $jobId, $fileId);
+            $contractId = $this->createContract($fields, $text, $confidence, $jobId, $fileId, $userId);
 
             // 6. 复制文件到附件目录
             $this->saveAsAttachment($filePath, $contractId);
@@ -220,7 +220,7 @@ class ContractImportService
     /**
      * 创建合同记录
      */
-    private function createContract(array $fields, string $ocrText, float $confidence, int $jobId, int $fileId): int
+    private function createContract(array $fields, string $ocrText, float $confidence, int $jobId, int $fileId, int $userId): int
     {
         $highThreshold = $this->config['high_confidence'] ?? 85;
 
@@ -252,7 +252,7 @@ class ContractImportService
             json_encode($fields['confidence'] ?? [], JSON_UNESCAPED_UNICODE),
             $ocrText,
             $jobId,
-            $_SESSION['admin_id'] ?? null,
+            $userId,
         ]);
 
         return (int) $this->db->lastInsertId();

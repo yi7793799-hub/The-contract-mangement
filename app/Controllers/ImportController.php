@@ -128,7 +128,8 @@ class ImportController
             redirect('/import.php');
         }
 
-        $adminId = $_SESSION['admin_id'] ?? 0;
+        $admin = current_admin();
+        $adminId = $admin['id'] ?? 0;
         if ($adminId <= 0) {
             $_SESSION['error'] = '请先登录';
             redirect('/login.php');
