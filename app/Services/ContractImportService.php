@@ -75,8 +75,8 @@ class ContractImportService
         $supported = ['.doc', '.docx', '.pdf', '.jpg', '.jpeg', '.png', '.webp'];
         $files = [];
 
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($folderPath, RecursiveDirectoryIterator::SKIP_DOTS)
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($folderPath, \RecursiveDirectoryIterator::SKIP_DOTS)
         );
 
         foreach ($iterator as $file) {
