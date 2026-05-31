@@ -133,7 +133,7 @@ class ContractImportService
     }
 
     /**
-     * 根据文件类型提取文本
+     * 根据文件类型提取文本（使用综合识别）
      */
     private function extractText(string $filePath): string
     {
@@ -143,20 +143,22 @@ class ContractImportService
             case 'docx':
                 return $this->extractDocxText($filePath);
             case 'doc':
-                // .doc 是旧格式二进制文件，需要特殊处理
-                // 尝试用 antiword 或 catdoc 命令行工具
                 $text = $this->extractDocText($filePath);
                 if (!empty($text)) {
                     return $text;
                 }
                 throw new \Exception('无法处理 .doc 文件，请先转换为 .docx 格式');
             case 'pdf':
-                return $this->ocr->recognizePdf($filePath)['text'] ?? '';
+                // 使用综合识别（合同专用）
+                $result = $this->ocr->recognizeContract($filePath);
+                return $result['text'] ?? '';
             case 'jpg':
             case 'jpeg':
             case 'png':
             case 'webp':
-                return $this->ocr->recognizeImage($filePath)['text'] ?? '';
+                // 使用综合识别（合同专用：文字 + 表格 + 印章）
+                $result = $this->ocr->recognizeContract($filePath);
+                return $result['text'] ?? '';
             default:
                 throw new \Exception('Unsupported file type: ' . $ext);
         }
