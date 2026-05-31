@@ -9,12 +9,21 @@ class DeepSeekService
     private $apiKey;
     /** @var string */
     private $model;
+    /** @var string */
+    private $baseUrl;
+    /** @var float */
+    private $temperature;
+    /** @var int */
+    private $timeout;
 
     public function __construct()
     {
         $config = deepseek_config();
         $this->apiKey = $config['api_key'] ?? '';
-        $this->model = $config['model'] ?? 'deepseek-chat';
+        $this->model = $config['model'] ?? 'deepseek-v4-pro';
+        $this->baseUrl = $config['base_url'] ?? 'https://api.deepseek.com';
+        $this->temperature = (float) ($config['temperature'] ?? 0.1);
+        $this->timeout = (int) ($config['timeout'] ?? 60);
     }
 
     /**
@@ -79,12 +88,12 @@ EOT;
      */
     public function chat(array $messages): string
     {
-        $url = 'https://api.deepseek.com/v1/chat/completions';
+        $url = $this->baseUrl . '/v1/chat/completions';
 
         $data = [
             'model' => $this->model,
             'messages' => $messages,
-            'temperature' => 0.1,
+            'temperature' => $this->temperature,
         ];
 
         $response = $this->httpPost($url, $data);
@@ -92,7 +101,7 @@ EOT;
         $result = json_decode($response, true);
 
         if (isset($result['error'])) {
-            throw new Exception('DeepSeek API error: ' . ($result['error']['message'] ?? 'Unknown error'));
+            throw new \Exception('DeepSeek API error: ' . ($result['error']['message'] ?? 'Unknown error'));
         }
 
         return $result['choices'][0]['message']['content'] ?? '';
@@ -111,7 +120,7 @@ EOT;
             }
         }
 
-        throw new Exception('Failed to parse DeepSeek response as JSON');
+        throw new \Exception('Failed to parse DeepSeek response as JSON');
     }
 
     /**
@@ -129,13 +138,15 @@ EOT;
         ]);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
         $response = curl_exec($ch);
         $error = curl_error($ch);
         curl_close($ch);
 
         if ($error) {
-            throw new Exception('HTTP request failed: ' . $error);
+            throw new \Exception('HTTP request failed: ' . $error);
         }
 
         return $response;

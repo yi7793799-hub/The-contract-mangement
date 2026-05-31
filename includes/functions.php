@@ -606,7 +606,16 @@ function baidu_ocr_config(): array
 
 function deepseek_config(): array
 {
-    return app_config()['deepseek'] ?? [];
+    static $c = null;
+    if ($c === null) {
+        $configFile = dirname(__DIR__) . '/config/deepseek.php';
+        if (file_exists($configFile)) {
+            $c = require $configFile;
+        } else {
+            $c = app_config()['deepseek'] ?? [];
+        }
+    }
+    return $c;
 }
 
 function import_config(): array

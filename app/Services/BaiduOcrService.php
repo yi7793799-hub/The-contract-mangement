@@ -48,7 +48,7 @@ class BaiduOcrService
             return $this->accessToken;
         }
 
-        throw new Exception('Failed to get Baidu access token: ' . ($data['error_description'] ?? 'Unknown error'));
+        throw new \Exception('Failed to get Baidu access token: ' . ($data['error_description'] ?? 'Unknown error'));
     }
 
     /**
@@ -69,7 +69,7 @@ class BaiduOcrService
     }
 
     /**
-     * 识别 PDF 文件（每页转图片）
+     * 识别 PDF 文件
      */
     public function recognizePdf(string $pdfPath): array
     {
@@ -80,21 +80,48 @@ class BaiduOcrService
             return ['text' => $text, 'is_ocr' => false];
         }
 
-        // 如果没有文字，使用 OCR（需要 PDF 转图片库，这里简化处理）
-        throw new Exception('PDF contains no extractable text and OCR not supported for PDF directly');
+        // 使用百度 OCR PDF 识别 API
+        return $this->recognizePdfByOcr($pdfPath);
     }
 
     /**
-     * 从 PDF 提取文字（简化版）
+     * 使用百度 OCR 识别 PDF
+     */
+    private function recognizePdfByOcr(string $pdfPath): array
+    {
+        $token = $this->getAccessToken();
+        $url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/pdf';
+
+        $pdfContent = base64_encode(file_get_contents($pdfPath));
+
+        $response = $this->httpPost($url . '?access_token=' . $token, [
+            'pdf_file' => $pdfContent,
+        ]);
+
+        return $this->parseResponse($response);
+    }
+
+    /**
+     * 从 PDF 提取文字（使用 pdftotext 或 pdf2text）
      */
     private function extractPdfText(string $pdfPath): string
     {
-        // 尝试使用 pdftotext 命令
+        // Windows 上尝试使用 pdf2text 或其他工具
+        // 如果没有安装，返回空字符串使用 OCR
         $output = [];
         $returnCode = 0;
 
-        exec('pdftotext ' . escapeshellarg($pdfPath) . ' - 2>/dev/null', $output, $returnCode);
+        // 尝试 pdftotext (Windows 版本)
+        $pdftotextPath = 'E:\\汇总\\phpstudyV8\\phpstudy_pro\\Extensions\\Apache2.4.39\\bin\\pdftotext.exe';
+        if (file_exists($pdftotextPath)) {
+            exec($pdftotextPath . ' ' . escapeshellarg($pdfPath) . ' - 2>&1', $output, $returnCode);
+            if ($returnCode === 0 && !empty($output)) {
+                return implode("\n", $output);
+            }
+        }
 
+        // 尝试系统路径中的 pdftotext
+        exec('pdftotext ' . escapeshellarg($pdfPath) . ' - 2>&1', $output, $returnCode);
         if ($returnCode === 0 && !empty($output)) {
             return implode("\n", $output);
         }
@@ -110,7 +137,7 @@ class BaiduOcrService
         $data = json_decode($response, true);
 
         if (isset($data['error_code'])) {
-            throw new Exception('Baidu OCR API error: ' . ($data['error_msg'] ?? 'Unknown error'));
+            throw new \Exception('Baidu OCR API error: ' . ($data['error_msg'] ?? 'Unknown error'));
         }
 
         $text = '';
@@ -137,13 +164,15 @@ class BaiduOcrService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, is_array($data) ? http_build_query($data) : $data);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
         $response = curl_exec($ch);
         $error = curl_error($ch);
         curl_close($ch);
 
         if ($error) {
-            throw new Exception('HTTP request failed: ' . $error);
+            throw new \Exception('HTTP request failed: ' . $error);
         }
 
         return $response;

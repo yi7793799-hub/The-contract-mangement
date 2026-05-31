@@ -9,7 +9,7 @@ class ContractImportService
     private $ocr;
     /** @var DeepSeekService */
     private $deepseek;
-    /** @var PDO */
+    /** @var \PDO */
     private $db;
     /** @var array */
     private $config;
@@ -149,7 +149,7 @@ class ContractImportService
                 if (!empty($text)) {
                     return $text;
                 }
-                throw new Exception('无法处理 .doc 文件，请先转换为 .docx 格式');
+                throw new \Exception('无法处理 .doc 文件，请先转换为 .docx 格式');
             case 'pdf':
                 return $this->ocr->recognizePdf($filePath)['text'] ?? '';
             case 'jpg':
@@ -158,7 +158,7 @@ class ContractImportService
             case 'webp':
                 return $this->ocr->recognizeImage($filePath)['text'] ?? '';
             default:
-                throw new Exception('Unsupported file type: ' . $ext);
+                throw new \Exception('Unsupported file type: ' . $ext);
         }
     }
 
@@ -191,7 +191,7 @@ class ContractImportService
     {
         $zip = new ZipArchive();
         if ($zip->open($filePath) !== true) {
-            throw new Exception('Failed to open DOCX file');
+            throw new \Exception('Failed to open DOCX file');
         }
 
         $content = $zip->getFromName('word/document.xml');
@@ -274,7 +274,7 @@ class ContractImportService
         }
 
         if (!copy($sourcePath, $destPath)) {
-            throw new Exception('Failed to copy attachment file');
+            throw new \Exception('Failed to copy attachment file');
         }
 
         $stmt = $this->db->prepare(
@@ -380,7 +380,7 @@ class ContractImportService
     {
         $stmt = $this->db->prepare("SELECT * FROM import_jobs WHERE id = ?");
         $stmt->execute([$jobId]);
-        $job = $stmt->fetch(PDO::FETCH_ASSOC);
+        $job = $stmt->fetch(\PDO::FETCH_ASSOC);
 
         $_SESSION['import_notification'] = [
             'job_id' => $jobId,
