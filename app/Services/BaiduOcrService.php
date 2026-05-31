@@ -93,7 +93,7 @@ class BaiduOcrService
         $output = [];
         $returnCode = 0;
 
-        exec('pdftotext "' . $pdfPath . '" - 2>/dev/null', $output, $returnCode);
+        exec('pdftotext ' . escapeshellarg($pdfPath) . ' - 2>/dev/null', $output, $returnCode);
 
         if ($returnCode === 0 && !empty($output)) {
             return implode("\n", $output);

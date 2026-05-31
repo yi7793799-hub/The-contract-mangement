@@ -100,6 +100,8 @@ class ContractImportService
         $fileId = $this->createFileRecord($filePath, $jobId);
 
         try {
+            $this->db->beginTransaction();
+
             // 2. 根据文件类型提取文本
             $text = $this->extractText($filePath);
 
@@ -121,7 +123,10 @@ class ContractImportService
             // 8. 更新任务统计
             $this->incrementJobCount($jobId, $confidence);
 
+            $this->db->commit();
+
         } catch (Exception $e) {
+            $this->db->rollBack();
             $this->updateFileFailed($fileId, $e->getMessage());
             $this->incrementJobFailed($jobId);
         }
@@ -138,8 +143,13 @@ class ContractImportService
             case 'docx':
                 return $this->extractDocxText($filePath);
             case 'doc':
-                // 简化处理，实际可能需要转换
-                return $this->ocr->recognizeImage($filePath)['text'] ?? '';
+                // .doc 是旧格式二进制文件，需要特殊处理
+                // 尝试用 antiword 或 catdoc 命令行工具
+                $text = $this->extractDocText($filePath);
+                if (!empty($text)) {
+                    return $text;
+                }
+                throw new Exception('无法处理 .doc 文件，请先转换为 .docx 格式');
             case 'pdf':
                 return $this->ocr->recognizePdf($filePath)['text'] ?? '';
             case 'jpg':
@@ -150,6 +160,28 @@ class ContractImportService
             default:
                 throw new Exception('Unsupported file type: ' . $ext);
         }
+    }
+
+    /**
+     * 提取 DOC 文本（尝试使用命令行工具）
+     */
+    private function extractDocText(string $filePath): string
+    {
+        // 尝试使用 antiword
+        $output = [];
+        $returnCode = 0;
+        exec('antiword ' . escapeshellarg($filePath) . ' 2>/dev/null', $output, $returnCode);
+        if ($returnCode === 0 && !empty($output)) {
+            return implode("\n", $output);
+        }
+
+        // 尝试使用 catdoc
+        exec('catdoc ' . escapeshellarg($filePath) . ' 2>/dev/null', $output, $returnCode);
+        if ($returnCode === 0 && !empty($output)) {
+            return implode("\n", $output);
+        }
+
+        return '';
     }
 
     /**
@@ -233,9 +265,17 @@ class ContractImportService
     {
         $ext = pathinfo($sourcePath, PATHINFO_EXTENSION);
         $newName = 'import_' . $contractId . '_' . time() . '.' . $ext;
-        $destPath = 'uploads/attachments/' . $newName;
+        $destDir = dirname(__DIR__, 2) . '/uploads/attachments';
+        $destPath = $destDir . '/' . $newName;
 
-        copy($sourcePath, $destPath);
+        // 确保目录存在
+        if (!is_dir($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        if (!copy($sourcePath, $destPath)) {
+            throw new Exception('Failed to copy attachment file');
+        }
 
         $stmt = $this->db->prepare(
             "INSERT INTO contract_files (contract_id, origin_name, file_path, mime_type, file_size, created_at)
@@ -305,12 +345,15 @@ class ContractImportService
     private function incrementJobCount(int $jobId, float $confidence): void
     {
         $lowThreshold = $this->config['low_confidence'] ?? 60;
-        $field = $confidence < $lowThreshold ? 'pending_count' : 'success_count';
+        $isPending = $confidence < $lowThreshold ? 1 : 0;
 
         $stmt = $this->db->prepare(
-            "UPDATE import_jobs SET {$field} = {$field} + 1 WHERE id = ?"
+            "UPDATE import_jobs SET
+                pending_count = pending_count + ?,
+                success_count = success_count + ?
+            WHERE id = ?"
         );
-        $stmt->execute([$jobId]);
+        $stmt->execute([$isPending, 1 - $isPending, $jobId]);
     }
 
     private function incrementJobFailed(int $jobId): void

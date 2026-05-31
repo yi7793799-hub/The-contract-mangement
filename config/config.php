@@ -26,5 +26,10 @@ return array (
   'import' => [
     'high_confidence' => 85,
     'low_confidence' => 60,
+    'allowed_paths' => [
+        'C:\Users',
+        'D:\',
+        'E:\',
+    ],
   ],
 );
