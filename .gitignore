@@ -1,0 +1,26 @@
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Uploads (keep structure, ignore content)
+uploads/*
+!uploads/.gitkeep
+
+# Config with sensitive data
+config/database.php
+config/baidu_ocr.php
+config/deepseek.php
+
+# Claude
+.claude/
