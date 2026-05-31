@@ -592,7 +592,16 @@ function mf_own_contract_only_enabled(PDO $pdo): bool
 
 function baidu_ocr_config(): array
 {
-    return app_config()['baidu_ocr'] ?? [];
+    static $c = null;
+    if ($c === null) {
+        $configFile = dirname(__DIR__) . '/config/baidu_ocr.php';
+        if (file_exists($configFile)) {
+            $c = require $configFile;
+        } else {
+            $c = app_config()['baidu_ocr'] ?? [];
+        }
+    }
+    return $c;
 }
 
 function deepseek_config(): array

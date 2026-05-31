@@ -15,10 +15,7 @@ return array (
     'timezone' => 'Asia/Shanghai',
     'base_path' => '/',
   ),
-  'baidu_ocr' => [
-    'ak' => 'your_ak',
-    'sk' => 'your_sk',
-  ],
+  // 百度 OCR 配置已移至 config/baidu_ocr.php
   'deepseek' => [
     'api_key' => 'your_key',
     'model' => 'deepseek-chat',
@@ -27,9 +24,9 @@ return array (
     'high_confidence' => 85,
     'low_confidence' => 60,
     'allowed_paths' => [
-        'C:\Users',
-        'D:\',
-        'E:\',
+        'C:\\Users',
+        'D:\\',
+        'E:\\',
     ],
   ],
 );
