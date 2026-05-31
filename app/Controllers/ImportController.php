@@ -440,7 +440,7 @@ class ImportController
              LIMIT ? OFFSET ?"
         );
         $stmt->execute([$perPage, $offset]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     private function getPendingContractsCount(): int
@@ -463,14 +463,14 @@ class ImportController
              WHERE c.id = ?"
         );
         $stmt->execute([$id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
     }
 
     private function getContractFiles(int $contractId): array
     {
         $stmt = db()->prepare("SELECT * FROM contract_files WHERE contract_id = ?");
         $stmt->execute([$contractId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     private function deleteContract(int $id): void
