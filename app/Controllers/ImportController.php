@@ -280,6 +280,9 @@ class ImportController
         // 获取附件
         $files = $this->getContractFiles($id);
 
+        // 获取合同类型列表
+        $types = $this->getContractTypes();
+
         ob_start();
         ?>
         <div class="mf-panel">
@@ -293,58 +296,144 @@ class ImportController
             </div>
             <div class="mf-panel__body">
                 <div class="mf-row">
-                    <div class="mf-col-md-8">
-                        <h4>识别结果</h4>
-                        <table class="mf-table">
+                    <div class="mf-col-md-6">
+                        <h4>合同信息（可编辑）</h4>
+                        <form id="editForm" method="post" action="<?= url('import/update.do.php') ?>">
+                            <input type="hidden" name="id" value="<?= $id ?>">
+                            <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">合同编号</label>
+                                <input type="text" name="contract_no" class="mf-input" value="<?= e($contract['contract_no'] ?? '') ?>">
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">合同名称 <span class="mf-text-danger">*</span></label>
+                                <input type="text" name="contract_name" class="mf-input" value="<?= e($contract['contract_name'] ?? '') ?>" required>
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">客户名称 <span class="mf-text-danger">*</span></label>
+                                <input type="text" name="customer_name" class="mf-input" value="<?= e($contract['customer_name'] ?? '') ?>" required>
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">签约方</label>
+                                <input type="text" name="signer_party" class="mf-input" value="<?= e($contract['signer_party'] ?? '') ?>">
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">签约人</label>
+                                <input type="text" name="signer_name" class="mf-input" value="<?= e($contract['signer_name'] ?? '') ?>">
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">联系电话</label>
+                                <input type="text" name="phone" class="mf-input" value="<?= e($contract['phone'] ?? '') ?>">
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">合同金额</label>
+                                <input type="number" name="amount" class="mf-input" value="<?= e($contract['amount'] ?? 0) ?>" step="0.01">
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">签订日期</label>
+                                <input type="date" name="signed_date" class="mf-input" value="<?= e($contract['signed_date'] ?? '') ?>">
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">生效日期</label>
+                                <input type="date" name="effective_date" class="mf-input" value="<?= e($contract['effective_date'] ?? '') ?>">
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">截止日期</label>
+                                <input type="date" name="expiry_date" class="mf-input" value="<?= e($contract['expiry_date'] ?? '') ?>">
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">合同类型</label>
+                                <select name="type_id" class="mf-input">
+                                    <option value="">-- 请选择 --</option>
+                                    <?php foreach ($types as $t): ?>
+                                    <option value="<?= e($t['id']) ?>" <?= ($contract['type_id'] ?? '') == $t['id'] ? 'selected' : '' ?>>
+                                        <?= e($t['name']) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="mf-form-item">
+                                <label class="mf-label">款项类型</label>
+                                <select name="payment_type" class="mf-input">
+                                    <option value="receipt" <?= ($contract['payment_type'] ?? 'receipt') === 'receipt' ? 'selected' : '' ?>>收款</option>
+                                    <option value="payment" <?= ($contract['payment_type'] ?? '') === 'payment' ? 'selected' : '' ?>>付款</option>
+                                </select>
+                            </div>
+
+                            <div class="mf-flex mf-gap-2 mf-mt-3">
+                                <button type="submit" class="mf-btn mf-btn--primary">
+                                    <i class="bi bi-save"></i> 保存修改
+                                </button>
+                                <a href="<?= url('import/approve/do.php?id=' . $id) ?>" class="mf-btn mf-btn--success" onclick="return confirm('保存并审核通过？')">
+                                    <i class="bi bi-check-lg"></i> 保存并通过
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="mf-col-md-6">
+                        <h4>OCR 识别结果</h4>
+                        <?php if (!empty($fields)): ?>
+                        <table class="mf-table mf-table--sm">
                             <thead>
                                 <tr>
                                     <th>字段</th>
-                                    <th>识别值</th>
                                     <th>置信度</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($fields as $field): ?>
+                                <?php foreach ($fields as $name => $conf): ?>
+                                <?php if (is_numeric($conf)): ?>
                                 <tr>
-                                    <td><?= e($field['name'] ?? '-') ?></td>
-                                    <td><?= e($field['value'] ?? '-') ?></td>
+                                    <td><?= e($name) ?></td>
                                     <td>
                                         <?php
-                                        $conf = (float) ($field['confidence'] ?? 0);
-                                        $badgeClass = $conf >= 85 ? 'mf-badge--success' : ($conf >= 60 ? 'mf-badge--warning' : 'mf-badge--danger');
+                                        $confVal = (float) $conf;
+                                        $badgeClass = $confVal >= 85 ? 'mf-badge--success' : ($confVal >= 60 ? 'mf-badge--warning' : 'mf-badge--danger');
                                         ?>
-                                        <span class="mf-badge <?= $badgeClass ?>"><?= number_format($conf * 100, 0) ?>%</span>
+                                        <span class="mf-badge <?= $badgeClass ?>"><?= number_format($confVal, 0) ?>%</span>
                                     </td>
                                 </tr>
+                                <?php endif; ?>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
+                        <?php else: ?>
+                        <p class="mf-text-muted">无置信度数据</p>
+                        <?php endif; ?>
 
                         <h4 class="mf-mt-3">原始OCR文本</h4>
-                        <div style="background:#f5f5f5;padding:12px;border-radius:4px;max-height:300px;overflow:auto;">
+                        <div style="background:#f5f5f5;padding:12px;border-radius:4px;max-height:250px;overflow:auto;font-size:12px;">
                             <pre style="white-space:pre-wrap;word-break:break-all;margin:0;"><?= e($ocrText) ?></pre>
                         </div>
-                    </div>
-                    <div class="mf-col-md-4">
-                        <h4>附件文件</h4>
+
+                        <h4 class="mf-mt-3">附件文件</h4>
                         <?php if (empty($files)): ?>
                         <p class="mf-text-muted">无附件</p>
                         <?php else: ?>
                         <ul class="mf-list">
                             <?php foreach ($files as $file): ?>
                             <li>
-                                <i class="bi bi-file-earmark"></i>
-                                <?= e($file['original_name'] ?? $file['file_name']) ?>
+                                <i class="bi bi-file-earmark-pdf"></i>
+                                <?= e($file['origin_name'] ?? $file['file_name']) ?>
                             </li>
                             <?php endforeach; ?>
                         </ul>
                         <?php endif; ?>
 
                         <div class="mf-mt-3">
-                            <a href="<?= url('import/approve/do.php?id=' . $id) ?>" class="mf-btn mf-btn--success mf-mb-2" style="width:100%;">
-                                <i class="bi bi-check-lg"></i> 审核通过
-                            </a>
-                            <a href="<?= url('import/reject/do.php?id=' . $id) ?>" class="mf-btn mf-btn--danger" style="width:100%;" onclick="return confirm('确定要驳回此合同吗？');">
+                            <a href="<?= url('import/reject/do.php?id=' . $id) ?>" class="mf-btn mf-btn--danger" onclick="return confirm('确定要驳回删除此合同吗？');">
                                 <i class="bi bi-x-lg"></i> 驳回删除
                             </a>
                         </div>
@@ -352,6 +441,17 @@ class ImportController
                 </div>
             </div>
         </div>
+
+        <script>
+        // 保存并通过：先保存再通过
+        document.querySelector('a[href*="approve/do"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            var form = document.getElementById('editForm');
+            var href = this.href;
+            form.action = '<?= url('import/update-approve.do.php') ?>';
+            form.submit();
+        });
+        </script>
         <?php
         $content = ob_get_clean();
         require dirname(__DIR__, 2) . '/includes/layout.php';
@@ -368,6 +468,99 @@ class ImportController
         $stmt->execute([$id]);
 
         $_SESSION['success'] = '合同已审核通过';
+        redirect('/import/review.php');
+    }
+
+    /**
+     * 更新合同信息
+     */
+    public function update(): void
+    {
+        require_permission('import.review.edit');
+
+        $id = (int) ($_POST['id'] ?? 0);
+        if ($id <= 0) {
+            $_SESSION['error'] = '无效的合同ID';
+            redirect('/import/review.php');
+        }
+
+        if (!csrf_verify($_POST['csrf'] ?? '')) {
+            $_SESSION['error'] = '会话已过期';
+            redirect('/import/review/detail.php?id=' . $id);
+        }
+
+        $stmt = db()->prepare(
+            "UPDATE contracts SET
+                contract_no = ?, contract_name = ?, customer_name = ?, signer_party = ?,
+                signer_name = ?, phone = ?, amount = ?, signed_date = ?, effective_date = ?,
+                expiry_date = ?, type_id = ?, payment_type = ?
+            WHERE id = ? AND status = 'pending_review'"
+        );
+
+        $stmt->execute([
+            trim($_POST['contract_no'] ?? ''),
+            trim($_POST['contract_name'] ?? ''),
+            trim($_POST['customer_name'] ?? ''),
+            trim($_POST['signer_party'] ?? ''),
+            trim($_POST['signer_name'] ?? ''),
+            trim($_POST['phone'] ?? ''),
+            (float) ($_POST['amount'] ?? 0),
+            $_POST['signed_date'] ?? null,
+            $_POST['effective_date'] ?? null,
+            $_POST['expiry_date'] ?? null,
+            (int) ($_POST['type_id'] ?? 0) ?: null,
+            $_POST['payment_type'] ?? 'receipt',
+            $id,
+        ]);
+
+        $_SESSION['success'] = '合同信息已更新';
+        redirect('/import/review/detail.php?id=' . $id);
+    }
+
+    /**
+     * 更新并审核通过
+     */
+    public function updateAndApprove(): void
+    {
+        require_permission('import.review.edit');
+
+        $id = (int) ($_POST['id'] ?? 0);
+        if ($id <= 0) {
+            $_SESSION['error'] = '无效的合同ID';
+            redirect('/import/review.php');
+        }
+
+        if (!csrf_verify($_POST['csrf'] ?? '')) {
+            $_SESSION['error'] = '会话已过期';
+            redirect('/import/review/detail.php?id=' . $id);
+        }
+
+        // 先更新
+        $stmt = db()->prepare(
+            "UPDATE contracts SET
+                contract_no = ?, contract_name = ?, customer_name = ?, signer_party = ?,
+                signer_name = ?, phone = ?, amount = ?, signed_date = ?, effective_date = ?,
+                expiry_date = ?, type_id = ?, payment_type = ?, status = 'ongoing'
+            WHERE id = ? AND status = 'pending_review'"
+        );
+
+        $stmt->execute([
+            trim($_POST['contract_no'] ?? ''),
+            trim($_POST['contract_name'] ?? ''),
+            trim($_POST['customer_name'] ?? ''),
+            trim($_POST['signer_party'] ?? ''),
+            trim($_POST['signer_name'] ?? ''),
+            trim($_POST['phone'] ?? ''),
+            (float) ($_POST['amount'] ?? 0),
+            $_POST['signed_date'] ?? null,
+            $_POST['effective_date'] ?? null,
+            $_POST['expiry_date'] ?? null,
+            (int) ($_POST['type_id'] ?? 0) ?: null,
+            $_POST['payment_type'] ?? 'receipt',
+            $id,
+        ]);
+
+        $_SESSION['success'] = '合同已更新并审核通过';
         redirect('/import/review.php');
     }
 
@@ -470,6 +663,12 @@ class ImportController
     {
         $stmt = db()->prepare("SELECT * FROM contract_files WHERE contract_id = ?");
         $stmt->execute([$contractId]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    private function getContractTypes(): array
+    {
+        $stmt = db()->query("SELECT id, name FROM contract_types WHERE status = 'active' ORDER BY name");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
