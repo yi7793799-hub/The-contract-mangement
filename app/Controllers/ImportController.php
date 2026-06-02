@@ -40,7 +40,7 @@ class ImportController
             <div class="mf-panel__body">
                 <?php if ($notification): ?>
                 <div class="mf-alert mf-alert--success mf-mb-3">
-                    导入完成！成功: <?= e($notification['success']) ?> | 待审核: <?= e($notification['pending']) ?> | 失败: <?= e($notification['failed']) ?>
+                    导入完成！成功: <?= e((string)$notification['success']) ?> | 待审核: <?= e((string)$notification['pending']) ?> | 失败: <?= e((string)$notification['failed']) ?>
                 </div>
                 <?php endif; ?>
 
@@ -80,7 +80,7 @@ class ImportController
                         <ul style="margin:0;padding-left:1.5em;line-height:2;">
                             <li>请确保文件夹内的文件格式为支持的格式</li>
                             <li>系统将自动识别合同文本并提取关键字段</li>
-                            <li>使用百度 OCR 识别图片和扫描版 PDF</li>
+                            <li>使用 SiliconFlow OCR 识别图片和扫描版 PDF</li>
                             <li>使用 DeepSeek 大模型进行语义校验</li>
                             <li>低置信度合同将标记为待审核状态</li>
                             <li>原始文件将保存为合同附件</li>
@@ -162,51 +162,125 @@ class ImportController
         ?>
         <div class="mf-panel">
             <div class="mf-panel__header">
-                <h3>待审核合同列表</h3>
+                <h3>📥 待审核合同列表</h3>
                 <div class="mf-panel__actions">
                     <a href="<?= url('import.php') ?>" class="mf-btn mf-btn--default">
                         <i class="bi bi-arrow-left"></i> 返回导入
                     </a>
                 </div>
             </div>
+
+            <!-- 页面说明 -->
+            <div style="background:#fff3cd;padding:12px 16px;border-bottom:1px solid #ffeeba;">
+                <strong>📋 页面说明：</strong>此处显示通过批量导入识别的合同，由于置信度较低（&lt;85%），需要人工审核确认。
+                <br><small style="color:#856404;">请核对合同信息，确认无误后点击"审核通过"，或修改信息后保存。</small>
+            </div>
+
             <div class="mf-panel__body">
+                <!-- 统计信息 -->
+                <div class="mf-row mf-mb-3">
+                    <div class="mf-col-md-4">
+                        <div style="background:#f8f9fa;padding:15px;border-radius:4px;text-align:center;">
+                            <div style="font-size:24px;color:#17a2b8;"><?= e((string)$total) ?></div>
+                            <div style="color:#6c757d;">待审核总数</div>
+                        </div>
+                    </div>
+                    <div class="mf-col-md-4">
+                        <div style="background:#f8f9fa;padding:15px;border-radius:4px;text-align:center;">
+                            <div style="font-size:24px;color:#28a745;"><?= e((string)$this->getApprovedCount()) ?></div>
+                            <div style="color:#6c757d;">已通过</div>
+                        </div>
+                    </div>
+                    <div class="mf-col-md-4">
+                        <div style="background:#f8f9fa;padding:15px;border-radius:4px;text-align:center;">
+                            <div style="font-size:24px;color:#dc3545;"><?= e((string)$this->getRejectedCount()) ?></div>
+                            <div style="color:#6c757d;">已驳回</div>
+                        </div>
+                    </div>
+                </div>
+
+                <?php if (isset($_SESSION['success'])): ?>
+                <div class="mf-alert mf-alert--success mf-mb-3">
+                    <i class="bi bi-check-circle"></i> <?= e($_SESSION['success']) ?>
+                </div>
+                <?php unset($_SESSION['success']); endif; ?>
+
                 <?php if (empty($contracts)): ?>
-                <div class="mf-empty-state">
-                    <i class="bi bi-inbox" style="font-size:48px;color:#c0c4cc;"></i>
-                    <p>暂无待审核合同</p>
+                <div class="mf-empty-state" style="padding:40px;text-align:center;">
+                    <i class="bi bi-inbox" style="font-size:64px;color:#c0c4cc;"></i>
+                    <p style="margin-top:16px;color:#909399;font-size:16px;">暂无待审核合同</p>
+                    <p style="color:#c0c4cc;font-size:14px;">所有导入的合同都已审核完毕</p>
                 </div>
                 <?php else: ?>
+
+                <!-- 操作提示 -->
+                <div style="background:#e7f5ff;padding:10px 16px;border-radius:4px;margin-bottom:16px;">
+                    <i class="bi bi-info-circle" style="color:#0066cc;"></i>
+                    <strong>操作提示：</strong>
+                    <span style="color:#495057;">勾选合同后可批量操作，或点击"审核"进入详情页修改信息。</span>
+                </div>
+
                 <form id="batchForm" method="post" action="<?= url('import/batch-approve.php') ?>">
                     <div class="mf-table-wrap">
-                        <table class="mf-table">
+                        <table class="mf-table" style="width:100%;">
                             <thead>
-                                <tr>
-                                    <th><input type="checkbox" id="selectAll"></th>
-                                    <th>合同编号</th>
+                                <tr style="background:#f5f7fa;">
+                                    <th style="width:40px;"><input type="checkbox" id="selectAll"></th>
+                                    <th style="width:180px;">合同编号</th>
                                     <th>合同名称</th>
-                                    <th>客户名称</th>
-                                    <th>置信度</th>
-                                    <th>创建时间</th>
-                                    <th>操作</th>
+                                    <th style="width:150px;">客户名称</th>
+                                    <th style="width:100px;">金额</th>
+                                    <th style="width:100px;">置信度</th>
+                                    <th style="width:160px;">导入时间</th>
+                                    <th style="width:80px;">操作</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($contracts as $c): ?>
                                 <tr>
-                                    <td><input type="checkbox" name="ids[]" value="<?= e($c['id']) ?>"></td>
-                                    <td><?= e($c['contract_no'] ?? '-') ?></td>
-                                    <td><?= e($c['contract_name'] ?? '-') ?></td>
-                                    <td><?= e($c['customer_name'] ?? '-') ?></td>
+                                    <td><input type="checkbox" name="ids[]" value="<?= e((string)$c['id']) ?>"></td>
                                     <td>
+                                        <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;">
+                                            <?= e($c['contract_no'] ?? '-') ?>
+                                        </code>
+                                    </td>
+                                    <td>
+                                        <?php if (empty($c['contract_name'])): ?>
+                                        <span style="color:#dc3545;"><i class="bi bi-exclamation-triangle"></i> 未识别</span>
+                                        <?php else: ?>
+                                        <?= e($c['contract_name']) ?>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (empty($c['customer_name'])): ?>
+                                        <span style="color:#dc3545;"><i class="bi bi-exclamation-triangle"></i> 未识别</span>
+                                        <?php else: ?>
+                                        <?= e($c['customer_name']) ?>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align:right;">
+                                        <?php if (!empty($c['amount'])): ?>
+                                        <span style="color:#28a745;font-weight:500;">¥<?= number_format((float)$c['amount'], 2) ?></span>
+                                        <?php else: ?>
+                                        <span style="color:#999;">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align:center;">
                                         <?php
                                         $conf = (float) ($c['import_confidence'] ?? 0);
                                         $badgeClass = $conf >= 85 ? 'mf-badge--success' : ($conf >= 60 ? 'mf-badge--warning' : 'mf-badge--danger');
                                         ?>
                                         <span class="mf-badge <?= $badgeClass ?>"><?= number_format($conf, 0) ?>%</span>
                                     </td>
-                                    <td><?= e($c['created_at'] ?? '-') ?></td>
+                                    <td style="color:#6c757d;font-size:13px;">
+                                        <?= e($c['created_at'] ?? '-') ?>
+                                    </td>
                                     <td>
-                                        <a href="<?= url('import/review/detail.php?id=' . $c['id']) ?>" class="mf-btn mf-btn--sm mf-btn--primary">审核</a>
+                                        <a href="<?= url('import/review/detail.php?id=' . $c['id']) ?>"
+                                           class="mf-btn mf-btn--sm mf-btn--primary"
+                                           title="查看详情并审核">
+                                            <i class="bi bi-eye"></i> 审核
+                                        </a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -215,18 +289,26 @@ class ImportController
                     </div>
 
                     <div class="mf-flex mf-items-center mf-gap-2 mf-mt-3">
-                        <button type="button" class="mf-btn mf-btn--success" onclick="batchApprove()">批量通过</button>
-                        <button type="button" class="mf-btn mf-btn--danger" onclick="batchReject()">批量驳回</button>
+                        <button type="button" class="mf-btn mf-btn--success" onclick="batchApprove()">
+                            <i class="bi bi-check-lg"></i> 批量通过
+                        </button>
+                        <button type="button" class="mf-btn mf-btn--danger" onclick="batchReject()">
+                            <i class="bi bi-x-lg"></i> 批量驳回
+                        </button>
+                        <span style="color:#6c757d;margin-left:16px;">
+                            <i class="bi bi-lightbulb"></i> 提示：批量通过将直接确认所有选中的合同
+                        </span>
                     </div>
                 </form>
 
                 <?php if ($totalPages > 1): ?>
                 <div class="mf-pagination mf-mt-3">
+                    <span style="color:#6c757d;">共 <?= e((string)$total) ?> 条，</span>
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                         <?php if ($i == $page): ?>
-                            <span class="mf-pagination__item active"><?= $i ?></span>
+                            <span class="mf-pagination__item active"><?= e((string)$i) ?></span>
                         <?php else: ?>
-                            <a href="?page=<?= $i ?>" class="mf-pagination__item"><?= $i ?></a>
+                            <a href="?page=<?= e((string)$i) ?>" class="mf-pagination__item"><?= e((string)$i) ?></a>
                         <?php endif; ?>
                     <?php endfor; ?>
                 </div>
@@ -240,11 +322,23 @@ class ImportController
             document.querySelectorAll('input[name="ids[]"]').forEach(cb => cb.checked = this.checked);
         });
         function batchApprove() {
-            document.getElementById('batchForm').action = '<?= url('import/batch-approve.php') ?>';
-            document.getElementById('batchForm').submit();
+            var checked = document.querySelectorAll('input[name="ids[]"]:checked');
+            if (checked.length === 0) {
+                alert('请先勾选要审核的合同');
+                return;
+            }
+            if (confirm('确定批量通过 ' + checked.length + ' 个合同吗？\n\n注意：批量通过将直接确认所有选中合同，建议逐个审核以确保信息准确。')) {
+                document.getElementById('batchForm').action = '<?= url('import/batch-approve.php') ?>';
+                document.getElementById('batchForm').submit();
+            }
         }
         function batchReject() {
-            if (confirm('确定要批量驳回选中的合同吗？')) {
+            var checked = document.querySelectorAll('input[name="ids[]"]:checked');
+            if (checked.length === 0) {
+                alert('请先勾选要驳回的合同');
+                return;
+            }
+            if (confirm('确定批量驳回 ' + checked.length + ' 个合同吗？\n\n注意：驳回后合同将被删除，此操作不可恢复。')) {
                 document.getElementById('batchForm').action = '<?= url('import/batch-reject.php') ?>';
                 document.getElementById('batchForm').submit();
             }
@@ -645,6 +739,18 @@ class ImportController
     private function getPendingReviewCount(): int
     {
         return $this->getPendingContractsCount();
+    }
+
+    private function getApprovedCount(): int
+    {
+        $stmt = db()->query("SELECT COUNT(*) FROM import_files WHERE status = 'success'");
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function getRejectedCount(): int
+    {
+        $stmt = db()->query("SELECT COUNT(*) FROM import_files WHERE status = 'failed'");
+        return (int) $stmt->fetchColumn();
     }
 
     private function getContractForReview(int $id): ?array

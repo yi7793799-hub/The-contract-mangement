@@ -15,7 +15,7 @@ return array (
     'timezone' => 'Asia/Shanghai',
     'base_path' => '/',
   ),
-  // 百度 OCR 配置已移至 config/baidu_ocr.php
+  // OCR 配置已移至 config/siliconflow.php
   'deepseek' => [
     'api_key' => 'your_key',
     'model' => 'deepseek-chat',

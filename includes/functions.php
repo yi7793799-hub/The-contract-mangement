@@ -622,3 +622,17 @@ function import_config(): array
 {
     return app_config()['import'] ?? ['high_confidence' => 85, 'low_confidence' => 60];
 }
+
+function siliconflow_config(): array
+{
+    static $c = null;
+    if ($c === null) {
+        $configFile = dirname(__DIR__) . '/config/siliconflow.php';
+        if (file_exists($configFile)) {
+            $c = require $configFile;
+        } else {
+            $c = app_config()['siliconflow'] ?? [];
+        }
+    }
+    return $c;
+}

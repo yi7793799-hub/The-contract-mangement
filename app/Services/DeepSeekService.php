@@ -48,15 +48,22 @@ class DeepSeekService
         return <<<EOT
 请从以下合同文本中提取关键信息，返回JSON格式。如果某字段无法提取，设为null。
 
+注意：
+1. 合同编号通常是类似 "93810-24AJHZX6-2424" 或 "HT-2026-001" 的格式
+2. 合同名称可能包含"工程"、"设计"、"勘察"、"建设"、"采购"等关键词
+3. 客户名称/签约方可能是公司名称，如"某某公司"、"某某油田"等
+4. 金额可能是带逗号的大数字，如 "4,624,568"
+5. 日期注意区分年份，如 OCR 可能误识别年份（2029可能是2024）
+
 必须返回的JSON格式：
 {
-    "contract_no": "合同编号，如HT-2026-001",
-    "contract_name": "合同名称",
-    "customer_name": "客户名称",
-    "signer_party": "签约方",
+    "contract_no": "合同编号",
+    "contract_name": "合同名称，根据内容推断，如'某某工程勘察设计合同'",
+    "customer_name": "客户名称或发包方/甲方",
+    "signer_party": "签约方或承包方/乙方",
     "signer_name": "签约人姓名",
     "phone": "联系电话",
-    "amount": "合同金额（数字）",
+    "amount": "合同金额（纯数字，不带逗号）",
     "signed_date": "签订日期（YYYY-MM-DD格式）",
     "effective_date": "生效日期（YYYY-MM-DD格式）",
     "expiry_date": "截止日期（YYYY-MM-DD格式）",

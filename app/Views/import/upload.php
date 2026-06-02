@@ -70,7 +70,7 @@
                 <ul class="text-start">
                     <li>请确保文件夹内的文件格式为支持的格式</li>
                     <li>系统将自动识别合同文本并提取关键字段</li>
-                    <li>使用百度 OCR 识别图片和扫描版 PDF</li>
+                    <li>使用 SiliconFlow OCR 识别图片和扫描版 PDF</li>
                     <li>使用 DeepSeek 大模型进行语义校验</li>
                     <li>低置信度合同将标记为待审核状态</li>
                     <li>原始文件将保存为合同附件</li>

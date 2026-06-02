@@ -3,12 +3,16 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+/**
+ * 合同导入服务
+ * 使用 PyMuPDF + SiliconFlow OCR + DeepSeek 进行合同识别
+ */
 class ContractImportService
 {
-    /** @var BaiduOcrService */
-    private $ocr;
     /** @var DeepSeekService */
     private $deepseek;
+    /** @var DocumentParserService */
+    private $parser;
     /** @var \PDO */
     private $db;
     /** @var array */
@@ -16,8 +20,8 @@ class ContractImportService
 
     public function __construct()
     {
-        $this->ocr = new BaiduOcrService();
         $this->deepseek = new DeepSeekService();
+        $this->parser = new DocumentParserService();
         $this->db = db();
         $this->config = import_config();
     }
@@ -102,7 +106,7 @@ class ContractImportService
         try {
             $this->db->beginTransaction();
 
-            // 2. 根据文件类型提取文本
+            // 2. 根据文件类型提取文本（使用 PyMuPDF + SiliconFlow OCR）
             $text = $this->extractText($filePath);
 
             // 3. 调用 DeepSeek 提取字段
@@ -125,85 +129,28 @@ class ContractImportService
 
             $this->db->commit();
 
-        } catch (Exception $e) {
-            $this->db->rollBack();
+        } catch (\Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            $this->updateFileFailed($fileId, $e->getMessage());
+            $this->incrementJobFailed($jobId);
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             $this->updateFileFailed($fileId, $e->getMessage());
             $this->incrementJobFailed($jobId);
         }
     }
 
     /**
-     * 根据文件类型提取文本（使用综合识别）
+     * 根据文件类型提取文本
      */
     private function extractText(string $filePath): string
     {
-        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-
-        switch ($ext) {
-            case 'docx':
-                return $this->extractDocxText($filePath);
-            case 'doc':
-                $text = $this->extractDocText($filePath);
-                if (!empty($text)) {
-                    return $text;
-                }
-                throw new \Exception('无法处理 .doc 文件，请先转换为 .docx 格式');
-            case 'pdf':
-                // 使用综合识别（合同专用）
-                $result = $this->ocr->recognizeContract($filePath);
-                return $result['text'] ?? '';
-            case 'jpg':
-            case 'jpeg':
-            case 'png':
-            case 'webp':
-                // 使用综合识别（合同专用：文字 + 表格 + 印章）
-                $result = $this->ocr->recognizeContract($filePath);
-                return $result['text'] ?? '';
-            default:
-                throw new \Exception('Unsupported file type: ' . $ext);
-        }
-    }
-
-    /**
-     * 提取 DOC 文本（尝试使用命令行工具）
-     */
-    private function extractDocText(string $filePath): string
-    {
-        // 尝试使用 antiword
-        $output = [];
-        $returnCode = 0;
-        exec('antiword ' . escapeshellarg($filePath) . ' 2>/dev/null', $output, $returnCode);
-        if ($returnCode === 0 && !empty($output)) {
-            return implode("\n", $output);
-        }
-
-        // 尝试使用 catdoc
-        exec('catdoc ' . escapeshellarg($filePath) . ' 2>/dev/null', $output, $returnCode);
-        if ($returnCode === 0 && !empty($output)) {
-            return implode("\n", $output);
-        }
-
-        return '';
-    }
-
-    /**
-     * 提取 DOCX 文本
-     */
-    private function extractDocxText(string $filePath): string
-    {
-        $zip = new ZipArchive();
-        if ($zip->open($filePath) !== true) {
-            throw new \Exception('Failed to open DOCX file');
-        }
-
-        $content = $zip->getFromName('word/document.xml');
-        $zip->close();
-
-        // 去除 XML 标签
-        $content = strip_tags($content);
-        $content = preg_replace('/\s+/', ' ', $content);
-
-        return trim($content);
+        $result = $this->parser->parse($filePath);
+        return $result['text'] ?? '';
     }
 
     /**
@@ -229,6 +176,20 @@ class ContractImportService
         // 根据置信度决定状态
         $status = $confidence >= $highThreshold ? 'ongoing' : 'pending_review';
 
+        // 处理合同编号：如果为空或重复，生成新编号
+        $contractNo = trim($fields['contract_no'] ?? '');
+        if (empty($contractNo)) {
+            $contractNo = $this->generateContractNo();
+        } else {
+            // 检查是否重复
+            $stmt = $this->db->prepare("SELECT id FROM contracts WHERE contract_no = ?");
+            $stmt->execute([$contractNo]);
+            if ($stmt->fetch()) {
+                // 编号重复，生成新编号并标记
+                $contractNo = $this->generateContractNo() . '(' . substr($fields['contract_no'], 0, 10) . ')';
+            }
+        }
+
         $stmt = $this->db->prepare(
             "INSERT INTO contracts (
                 contract_no, contract_name, customer_name, signer_party, signer_name, phone,
@@ -238,7 +199,7 @@ class ContractImportService
         );
 
         $stmt->execute([
-            $fields['contract_no'] ?? '',
+            $contractNo,
             $fields['contract_name'] ?? '',
             $fields['customer_name'] ?? '',
             $fields['signer_party'] ?? '',
@@ -258,6 +219,14 @@ class ContractImportService
         ]);
 
         return (int) $this->db->lastInsertId();
+    }
+
+    /**
+     * 生成唯一合同编号
+     */
+    private function generateContractNo(): string
+    {
+        return 'IMP' . date('ymdHis') . str_pad((string) random_int(0, 999), 3, '0', STR_PAD_LEFT);
     }
 
     /**
