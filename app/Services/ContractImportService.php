@@ -31,30 +31,40 @@ class ContractImportService
      */
     public function processFolder(string $folderPath, int $userId): int
     {
+        // 设置超时
+        @set_time_limit(0);
+
         // 1. 创建导入任务
         $jobId = $this->createJob($folderPath, $userId);
 
-        // 2. 扫描文件夹获取文件
-        $files = $this->scanFolder($folderPath);
+        try {
+            // 2. 扫描文件夹获取文件
+            $files = $this->scanFolder($folderPath);
 
-        if (empty($files)) {
+            if (empty($files)) {
+                $this->updateJobStatus($jobId, 'completed');
+                return $jobId;
+            }
+
+            // 3. 更新任务文件数量
+            $this->updateJobTotalFiles($jobId, count($files));
+
+            // 4. 逐个处理文件
+            foreach ($files as $file) {
+                $this->processFile($file, $jobId, $userId);
+            }
+
+            // 5. 更新任务完成状态
             $this->updateJobStatus($jobId, 'completed');
-            return $jobId;
+
+            // 6. 记录通知
+            $this->recordNotification($jobId);
+
+        } catch (\Throwable $e) {
+            // 记录错误到日志
+            error_log('Import error: ' . $e->getMessage());
+            $this->updateJobStatus($jobId, 'failed');
         }
-
-        // 3. 更新任务文件数量
-        $this->updateJobTotalFiles($jobId, count($files));
-
-        // 4. 逐个处理文件
-        foreach ($files as $file) {
-            $this->processFile($file, $jobId, $userId);
-        }
-
-        // 5. 更新任务完成状态
-        $this->updateJobStatus($jobId, 'completed');
-
-        // 6. 记录通知
-        $this->recordNotification($jobId);
 
         return $jobId;
     }

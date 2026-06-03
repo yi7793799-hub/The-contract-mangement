@@ -32,20 +32,23 @@ class DocumentParserService
     private function findPython(): string
     {
         $candidates = [
-            'python',
-            'python3',
-            'C:\Python312\python.exe',
-            'C:\Python311\python.exe',
-            'C:\Python310\python.exe',
-            'C:\Users\A\AppData\Local\Programs\Python\Python312\python.exe',
+            'D:/Edge download/Python/Install/python.exe',
+            'D:/Software/anaconda/python.exe',
+            'C:/Users/A/AppData/Local/Microsoft/WindowsApps/python.exe',
+            'C:/Python312/python.exe',
+            'C:/Python311/python.exe',
+            'C:/Python310/python.exe',
+            'C:/Users/A/AppData/Local/Programs/Python/Python312/python.exe',
         ];
 
         foreach ($candidates as $path) {
             $output = [];
             $returnCode = 0;
-            exec($path . ' --version 2>&1', $output, $returnCode);
+            // 使用引号包裹路径，确保带空格的路径能正确执行
+            $quotedPath = '"' . $path . '"';
+            exec($quotedPath . ' --version 2>&1', $output, $returnCode);
             if ($returnCode === 0) {
-                return $path;
+                return $path; // 返回未加引号的路径，后续使用时再加引号
             }
         }
 
