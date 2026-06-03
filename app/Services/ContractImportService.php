@@ -22,8 +22,8 @@ class ContractImportService
     {
         $this->deepseek = new DeepSeekService();
         $this->parser = new DocumentParserService();
-        $this->db = db();
-        $this->config = import_config();
+        $this->db = \db();
+        $this->config = \import_config();
     }
 
     /**
