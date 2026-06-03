@@ -66,11 +66,9 @@ class ImportController
                             <i class="bi bi-upload"></i> 开始导入
                         </button>
 
-                        <?php if ($pendingCount > 0): ?>
                         <a href="<?= url('import/review.php') ?>" class="mf-btn mf-btn--warning">
-                            查看待审核合同 (<?= $pendingCount ?>)
+                            查看待审核合同 <?php if ($pendingCount > 0): ?> (<?= $pendingCount ?>) <?php endif; ?>
                         </a>
-                        <?php endif; ?>
                     </div>
                 </form>
 
