@@ -1870,8 +1870,7 @@ body.mf-app .mf-stat-tile--amber {
   border-radius: 0 !important;
 }
 
-/* ---------- 登录页（绿底横幅 + 白卡片，参考云上铺风格） ---------- */
-/* 覆盖 mf-ui.css 中 .mf-login-page 的居中+内边距+渐变底，否则整页会被挤在中间、样式错乱 */
+/* ---------- 登录页（极简高端风格 + 精致动画 + 优雅色彩） ---------- */
 .mf-login-page.mf-login-page--cloud {
   min-height: 100vh;
   margin: 0;
@@ -1880,8 +1879,9 @@ body.mf-app .mf-stat-tile--amber {
   align-items: stretch;
   justify-content: flex-start;
   padding: 0;
-  background: #fff;
+  background: linear-gradient(135deg, #f8f9fc 0%, #e8f4f8 50%, #fef9f3 100%);
   box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .mf-login-cloud {
@@ -1893,61 +1893,59 @@ body.mf-app .mf-stat-tile--amber {
 
 .mf-login-cloud__header {
   flex-shrink: 0;
-  background: #fff;
-  border-bottom: 1px solid #e8ecf0;
-  padding: 12px clamp(16px, 4vw, 48px);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 20px 40px;
 }
 
 .mf-login-cloud__header-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  max-width: 1100px;
+  gap: 12px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 .mf-login-cloud__logo--img img {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   display: block;
-  border-radius: 8px;
 }
 
 .mf-login-cloud__logo--mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  font-weight: 800;
-  font-size: 13px;
-  letter-spacing: -0.02em;
+  width: 32px;
+  height: 32px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   color: #fff;
-  background: linear-gradient(135deg, #2ecc71 0%, #f1c40f 100%);
-  box-shadow: 0 2px 8px rgba(46, 204, 113, 0.35);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
 }
 
 .mf-login-cloud__header-title {
-  font-size: 17px;
-  font-weight: 600;
-  color: #2c3e50;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1e293b;
+  letter-spacing: -0.01em;
 }
 
 .mf-login-cloud__hero {
   position: relative;
   flex: 1;
-  background: #2ecc71;
-  background-image: radial-gradient(ellipse 120% 80% at 20% 30%, rgba(255, 255, 255, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 90% 60% at 85% 70%, rgba(255, 255, 255, 0.12) 0%, transparent 50%);
-  padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 48px);
-  padding-bottom: clamp(72px, 14vh, 120px);
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  background: transparent;
   overflow: hidden;
 }
 
+/* 背景装饰动画 */
 .mf-login-cloud__hero-bg {
   position: absolute;
   inset: 0;
@@ -1955,112 +1953,437 @@ body.mf-app .mf-stat-tile--amber {
   overflow: hidden;
 }
 
-.mf-login-cloud__hero-bg::before,
+/* 呼吸圆形脉冲 - 明显的圆形轮廓 */
+.mf-login-cloud__hero-bg::before {
+  content: "";
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border: 2px solid rgba(99, 102, 241, 0.3);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: breathing-circle 4s ease-in-out infinite;
+  box-shadow:
+    0 0 0 0 rgba(99, 102, 241, 0.1),
+    inset 0 0 60px rgba(139, 92, 246, 0.05);
+}
+
+/* 第二层呼吸圆 */
 .mf-login-cloud__hero-bg::after {
   content: "";
   position: absolute;
+  width: 350px;
+  height: 350px;
+  border: 1.5px solid rgba(236, 72, 153, 0.25);
   border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: breathing-circle 4s ease-in-out infinite 0.5s;
+  box-shadow:
+    0 0 0 0 rgba(236, 72, 153, 0.08),
+    inset 0 0 40px rgba(236, 72, 153, 0.03);
+}
+
+/* 浮动粒子效果 - 通过伪元素无法实现，在HTML中添加 */
+
+@keyframes breathing-circle {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+    box-shadow:
+      0 0 0 0 rgba(99, 102, 241, 0.1),
+      inset 0 0 60px rgba(139, 92, 246, 0.05);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+    box-shadow:
+      0 0 0 20px rgba(99, 102, 241, 0.05),
+      0 0 80px rgba(139, 92, 246, 0.1),
+      inset 0 0 80px rgba(139, 92, 246, 0.08);
+  }
+}
+
+/* 漂浮光点动画 */
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+/* 漂浮粒子 */
+.mf-login-particles {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
-  opacity: 0.12;
-  background: #fff;
+  overflow: hidden;
 }
 
-.mf-login-cloud__hero-bg::before {
-  width: min(420px, 70vw);
-  height: min(420px, 70vw);
-  top: -12%;
-  left: -8%;
+.mf-login-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(139, 92, 246, 0.4));
+  border-radius: 50%;
+  animation: float-particle 8s ease-in-out infinite;
 }
 
-.mf-login-cloud__hero-bg::after {
-  width: min(280px, 45vw);
-  height: min(280px, 45vw);
-  bottom: 5%;
-  left: 35%;
+.mf-login-particle--1 {
+  left: 10%;
+  bottom: -20px;
+  animation-delay: 0s;
+  animation-duration: 7s;
+}
+
+.mf-login-particle--2 {
+  left: 25%;
+  bottom: -20px;
+  animation-delay: 1s;
+  animation-duration: 9s;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.5), rgba(244, 114, 182, 0.3));
+}
+
+.mf-login-particle--3 {
+  left: 45%;
+  bottom: -20px;
+  animation-delay: 2s;
+  animation-duration: 8s;
+  width: 8px;
+  height: 8px;
+}
+
+.mf-login-particle--4 {
+  left: 65%;
+  bottom: -20px;
+  animation-delay: 3s;
+  animation-duration: 10s;
+  width: 5px;
+  height: 5px;
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.5), rgba(244, 114, 182, 0.3));
+}
+
+.mf-login-particle--5 {
+  left: 80%;
+  bottom: -20px;
+  animation-delay: 4s;
+  animation-duration: 7.5s;
+  width: 4px;
+  height: 4px;
+}
+
+.mf-login-particle--6 {
+  left: 90%;
+  bottom: -20px;
+  animation-delay: 5s;
+  animation-duration: 9.5s;
+  width: 7px;
+  height: 7px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.3));
 }
 
 .mf-login-cloud__hero-inner {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1100px;
+  max-width: 420px;
   margin: 0 auto;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: clamp(24px, 4vw, 48px);
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .mf-login-cloud__pitch {
-  flex: 1 1 320px;
-  min-width: 0;
-  color: #fff;
+  text-align: center;
+  margin-bottom: 48px;
+  animation: fade-in-up 0.8s ease-out;
 }
 
 .mf-login-cloud__pitch-title {
-  margin: 0 0 18px;
-  font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+  margin: 0;
+  font-size: 42px;
   font-weight: 700;
-  line-height: 1.35;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  line-height: 1.3;
+  background: linear-gradient(135deg, #1e293b 0%, #4f46e5 50%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 20px;
+}
+
+/* 标题装饰 - 优雅的点线组合 */
+.mf-login-cloud__pitch-title::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+  border-radius: 3px;
+  animation: line-expand 0.8s ease-out 0.5s both;
+}
+
+/* 两端小圆点装饰 */
+.mf-login-cloud__pitch-title::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50%;
+  animation: dot-appear 0.5s ease-out 0.9s both;
+  box-shadow:
+    -12px 0 0 rgba(236, 72, 153, 0.6),
+    12px 0 0 rgba(99, 102, 241, 0.6);
+}
+
+@keyframes line-expand {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  100% {
+    width: 50px;
+    opacity: 1;
+  }
+}
+
+@keyframes dot-appear {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
 }
 
 .mf-login-cloud__features {
-  max-width: 420px;
-  padding: 0;
-  border: none;
-  border-radius: 0;
   font-size: 15px;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.95);
-  background: transparent;
+  line-height: 1.6;
+  color: #64748b;
+  margin: 0;
 }
 
 .mf-login-cloud__card {
-  flex: 0 1 380px;
   width: 100%;
-  max-width: 400px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-  padding: 28px 28px 26px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  padding: 48px 44px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 20px 50px -12px rgba(99, 102, 241, 0.15);
+  animation: card-enter-v2 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
   position: relative;
-  z-index: 2;
-  margin-bottom: clamp(-56px, -8vh, -40px);
+}
+
+/* 卡片入场动画 - 更炫酷 */
+@keyframes card-enter-v2 {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) scale(0.9) rotateX(10deg);
+    filter: blur(10px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.02) rotateX(0deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0deg);
+    filter: blur(0);
+  }
+}
+
+/* 卡片内部元素依次显现 */
+.mf-login-cloud__card-title {
+  animation: card-content-enter 0.5s ease-out 0.6s both;
+}
+
+.mf-login-cloud__field:nth-child(1) {
+  animation: card-content-enter 0.5s ease-out 0.7s both;
+}
+
+.mf-login-cloud__field:nth-child(2) {
+  animation: card-content-enter 0.5s ease-out 0.85s both;
+}
+
+.mf-login-cloud__remember-row {
+  animation: card-content-enter 0.5s ease-out 1s both;
+}
+
+.mf-login-cloud__submit {
+  animation: card-content-enter 0.5s ease-out 1.15s both;
+}
+
+@keyframes card-content-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 移除之前的动画定义 */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .mf-login-cloud__card-title {
-  margin: 0 0 22px;
-  font-size: 20px;
+  margin: 0 0 36px;
+  font-size: 14px;
   font-weight: 600;
-  color: #3d4a5c;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-align: center;
+  position: relative;
+}
+
+/* 卡片标题装饰 */
+.mf-login-cloud__card-title::before,
+.mf-login-cloud__card-title::after {
+  content: "";
+  display: inline-block;
+  width: 30px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3));
+  vertical-align: middle;
+  margin: 0 12px;
+  opacity: 0;
+  animation: title-line-enter 0.5s ease-out 0.8s forwards;
+}
+
+.mf-login-cloud__card-title::after {
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.3), transparent);
+}
+
+@keyframes title-line-enter {
+  to {
+    opacity: 1;
+    width: 40px;
+  }
 }
 
 .mf-login-cloud__field {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+.mf-login-cloud__field:nth-child(1) { animation-delay: 0.7s; }
+.mf-login-cloud__field:nth-child(2) { animation-delay: 0.85s; }
+
+@keyframes field-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .mf-login-cloud__input-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
-  border: 1px solid #dcdfe6;
-  border-radius: 6px;
-  padding: 0 12px;
+  gap: 12px;
+  border: 2px solid #e2e8f0;
+  padding: 0 16px;
   background: #fff;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  border-radius: 12px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 输入框聚焦时的光晕效果 */
+.mf-login-cloud__input-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.mf-login-cloud__input-wrap:focus-within::before {
+  opacity: 1;
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
 }
 
 .mf-login-cloud__input-wrap:focus-within {
-  border-color: #2ecc71;
-  box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.18);
+  border-color: #6366f1;
+  box-shadow:
+    0 0 0 4px rgba(99, 102, 241, 0.1),
+    0 4px 20px rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
 }
 
 .mf-login-cloud__input-wrap > .bi {
   flex-shrink: 0;
-  font-size: 1.1rem;
-  color: #909399;
+  font-size: 18px;
+  color: #94a3b8;
+  transition: all 0.3s ease;
+}
+
+.mf-login-cloud__input-wrap:focus-within > .bi {
+  color: #6366f1;
+  transform: scale(1.1);
 }
 
 .mf-login-cloud__input {
@@ -2068,103 +2391,191 @@ body.mf-app .mf-stat-tile--amber {
   min-width: 0;
   border: none !important;
   background: transparent;
-  padding: 12px 0;
+  padding: 14px 0;
   font-size: 15px;
-  color: #303133;
+  color: #1e293b;
   outline: none;
-  border-radius: 0 !important;
+  transition: all 0.3s ease;
+}
+
+.mf-login-cloud__input:focus {
+  transform: translateX(2px);
 }
 
 .mf-login-cloud__input::placeholder {
-  color: #c0c4cc;
+  color: #cbd5e1;
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.mf-login-cloud__input:focus::placeholder {
+  color: #94a3b8;
+  opacity: 0.7;
 }
 
 .mf-login-cloud__remember-row {
-  margin: 4px 0 18px;
+  margin: 24px 0 28px;
 }
 
 .mf-login-cloud__remember {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 14px;
-  color: #606266;
+  color: #64748b;
   cursor: pointer;
   user-select: none;
+  transition: color 0.2s ease;
+}
+
+.mf-login-cloud__remember:hover {
+  color: #4f46e5;
 }
 
 .mf-login-cloud__remember input {
-  width: 16px;
-  height: 16px;
-  accent-color: #2ecc71;
+  width: 18px;
+  height: 18px;
+  accent-color: #6366f1;
   cursor: pointer;
 }
 
 .mf-login-cloud__submit {
   width: 100%;
   border: none;
-  border-radius: 6px;
-  background: #f39c12;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  background-size: 200% 200%;
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  padding: 12px 20px;
+  padding: 18px 24px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 按钮内部光效 */
+.mf-login-cloud__submit::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+/* 按钮底部发光 */
+.mf-login-cloud__submit::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 10%;
+  right: 10%;
+  height: 20px;
+  background: radial-gradient(ellipse, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease, bottom 0.4s ease;
+  filter: blur(10px);
+}
+
+.mf-login-cloud__submit:hover::before {
+  left: 100%;
+}
+
+.mf-login-cloud__submit:hover::after {
+  opacity: 1;
+  bottom: -5px;
 }
 
 .mf-login-cloud__submit:hover {
-  background: #e67e22;
+  background-position: 100% 0;
+  transform: translateY(-3px);
+  box-shadow:
+    0 10px 30px -10px rgba(99, 102, 241, 0.5),
+    0 15px 40px -15px rgba(139, 92, 246, 0.4);
 }
 
 .mf-login-cloud__submit:active {
-  transform: translateY(1px);
+  transform: translateY(-1px) scale(0.98);
+  box-shadow:
+    0 5px 15px -5px rgba(99, 102, 241, 0.4),
+    0 8px 20px -8px rgba(139, 92, 246, 0.3);
 }
 
 .mf-login-cloud__footer {
   flex-shrink: 0;
-  position: relative;
-  z-index: 1;
   text-align: center;
-  padding: clamp(48px, 9vh, 72px) 16px 24px;
-  background: #fff;
-  border-top: 1px solid #eef1f4;
+  padding: 50px 40px 30px;
+  background: transparent;
+  animation: fade-in-up 0.6s ease-out 1.3s both;
 }
 
 .mf-login-cloud__slogan {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-size: 14px;
-  color: #7f8c8d;
-  font-style: italic;
+  font-weight: 500;
+  color: #64748b;
+  letter-spacing: 0.08em;
 }
 
 .mf-login-cloud__copy {
   margin: 0;
-  font-size: 12px;
-  color: #a4a4a4;
+  font-size: 13px;
+  color: #94a3b8;
 }
 
 @media (max-width: 767.98px) {
-  .mf-login-cloud__hero {
-    padding-bottom: clamp(48px, 10vh, 88px);
+  .mf-login-cloud__header {
+    padding: 16px 20px;
   }
 
-  .mf-login-cloud__hero-inner {
-    flex-direction: column;
-    align-items: stretch;
+  .mf-login-cloud__hero {
+    padding: 30px 20px;
   }
 
   .mf-login-cloud__card {
-    max-width: none;
-    margin-bottom: -32px;
-  }
-
-  .mf-login-cloud__footer {
-    padding-top: 44px;
+    padding: 36px 28px;
+    border-radius: 20px;
   }
 
   .mf-login-cloud__pitch-title {
-    font-size: 1.35rem;
+    font-size: 32px;
+  }
+
+  .mf-login-cloud__footer {
+    padding: 40px 20px 24px;
+  }
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  .mf-login-cloud__hero-bg::before,
+  .mf-login-cloud__hero-bg::after {
+    animation: none;
+  }
+
+  .mf-login-cloud__pitch,
+  .mf-login-cloud__card,
+  .mf-login-cloud__field,
+  .mf-login-cloud__remember-row,
+  .mf-login-cloud__submit,
+  .mf-login-cloud__footer {
+    animation: none;
+  }
+
+  .mf-login-cloud__pitch-title::after {
+    animation: none;
+    width: 60px;
+    left: calc(50% - 30px);
   }
 }
 

@@ -70,6 +70,68 @@ class ContractImportService
     }
 
     /**
+     * 处理上传的文件列表
+     */
+    public function processFiles(array $filePaths, int $userId, string $tempDir = ''): int
+    {
+        // 设置超时
+        @set_time_limit(0);
+
+        // 1. 创建导入任务
+        $jobId = $this->createJob('上传文件', $userId);
+
+        try {
+            if (empty($filePaths)) {
+                $this->updateJobStatus($jobId, 'completed');
+                return $jobId;
+            }
+
+            // 2. 更新任务文件数量
+            $this->updateJobTotalFiles($jobId, count($filePaths));
+
+            // 3. 逐个处理文件
+            foreach ($filePaths as $file) {
+                $this->processFile($file, $jobId, $userId);
+            }
+
+            // 4. 更新任务完成状态
+            $this->updateJobStatus($jobId, 'completed');
+
+            // 5. 记录通知
+            $this->recordNotification($jobId);
+
+            // 6. 清理临时目录（如果提供）
+            if (!empty($tempDir) && is_dir($tempDir)) {
+                $this->cleanupTempDir($tempDir);
+            }
+
+        } catch (\Throwable $e) {
+            error_log('Import error: ' . $e->getMessage());
+            $this->updateJobStatus($jobId, 'failed');
+        }
+
+        return $jobId;
+    }
+
+    /**
+     * 清理临时目录
+     */
+    private function cleanupTempDir(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = glob($dir . '/*');
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
+        }
+        @rmdir($dir);
+    }
+
+    /**
      * 创建导入任务
      */
     private function createJob(string $folderPath, int $userId): int
@@ -266,9 +328,37 @@ class ContractImportService
             $contractId,
             basename($sourcePath),
             $destPath,
-            mime_content_type($sourcePath),
+            $this->getMimeType($sourcePath),
             filesize($sourcePath),
         ]);
+    }
+
+    /**
+     * 获取文件MIME类型
+     */
+    private function getMimeType(string $filePath): string
+    {
+        if (function_exists('mime_content_type')) {
+            return mime_content_type($filePath);
+        }
+
+        if (class_exists('finfo')) {
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            return $finfo->file($filePath);
+        }
+
+        // 根据扩展名返回默认类型
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $types = [
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+        ];
+        return $types[$ext] ?? 'application/octet-stream';
     }
 
     /**

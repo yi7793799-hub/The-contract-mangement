@@ -140,7 +140,7 @@ PROMPT;
         // 读取图片并转为 base64
         $imageData = file_get_contents($imagePath);
         $base64 = base64_encode($imageData);
-        $mimeType = mime_content_type($imagePath);
+        $mimeType = $this->getMimeType($imagePath);
 
         $messages = [
             [
@@ -196,6 +196,32 @@ PROMPT;
         }
 
         return $result['choices'][0]['message']['content'] ?? '';
+    }
+
+    /**
+     * 获取文件MIME类型
+     */
+    private function getMimeType(string $filePath): string
+    {
+        if (function_exists('mime_content_type')) {
+            return mime_content_type($filePath);
+        }
+
+        if (class_exists('finfo')) {
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            return $finfo->file($filePath);
+        }
+
+        // 根据扩展名返回默认类型
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $types = [
+            'pdf' => 'application/pdf',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+        ];
+        return $types[$ext] ?? 'application/octet-stream';
     }
 
     /**

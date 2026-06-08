@@ -37,7 +37,7 @@ function mf_ensure_app_settings_table(PDO $pdo): void
 function mf_site_branding(?PDO $pdo = null): array
 {
     $cfg = app_config();
-    $defaultName = (string) ($cfg['app']['name'] ?? '云云合同管理系统');
+    $defaultName = (string) ($cfg['app']['name'] ?? '智链经营');
     try {
         if ($pdo === null) {
             $pdo = db();

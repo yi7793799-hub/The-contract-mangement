@@ -13,7 +13,7 @@
     <header class="mf-login-cloud__header">
         <div class="mf-login-cloud__header-brand">
             <span class="mf-login-cloud__logo mf-login-cloud__logo--mark" aria-hidden="true">CP</span>
-            <span class="mf-login-cloud__header-title">合同管理系统</span>
+            <span class="mf-login-cloud__header-title">智链经营</span>
         </div>
     </header>
 

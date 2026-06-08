@@ -52,17 +52,43 @@ class ImportController
                 <div class="mf-alert mf-alert--danger mf-mb-3"><?= e($_SESSION['error']) ?></div>
                 <?php unset($_SESSION['error']); endif; ?>
 
-                <form method="post" action="<?= url('import/process.php') ?>">
-                    <div class="mf-form-item">
-                        <label class="mf-label">文件夹路径 <span class="mf-text-danger">*</span></label>
-                        <input type="text" name="folder_path" class="mf-input"
-                               placeholder="请输入包含合同文件的文件夹路径，如 D:\contracts"
-                               required style="width:100%;">
-                        <div class="mf-form-help">支持 .doc, .docx, .pdf, .jpg, .png, .webp 格式</div>
-                    </div>
+                <!-- 文件上传区域 -->
+                <form id="uploadForm" method="post" action="<?= url('import/process.php') ?>" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
 
                     <div class="mf-form-item">
-                        <button type="submit" class="mf-btn mf-btn--primary">
+                        <label class="mf-label">选择合同文件</label>
+                        <div id="dropZone" style="
+                            border: 2px dashed #dcdfe6;
+                            border-radius: 8px;
+                            padding: 40px 20px;
+                            text-align: center;
+                            background: #fafafa;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                        ">
+                            <i class="bi bi-cloud-upload" style="font-size: 48px; color: #c0c4cc;"></i>
+                            <p style="margin: 16px 0 8px; color: #606266; font-size: 16px;">
+                                点击选择文件或拖拽文件到此处
+                            </p>
+                            <p style="margin: 0; color: #909399; font-size: 13px;">
+                                支持 .doc, .docx, .pdf, .jpg, .png, .webp 格式，可多选
+                            </p>
+                            <input type="file" name="files[]" id="fileInput" multiple accept=".doc,.docx,.pdf,.jpg,.jpeg,.png,.webp" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- 已选择文件列表 -->
+                    <div id="fileList" class="mf-mt-3" style="display: none;">
+                        <div class="mf-form-item">
+                            <label class="mf-label">已选择的文件 (<span id="fileCount">0</span> 个)</label>
+                            <div id="fileListContent" style="max-height: 200px; overflow-y: auto; border: 1px solid #e4e7ed; border-radius: 4px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mf-form-item mf-mt-3">
+                        <button type="submit" class="mf-btn mf-btn--primary" id="submitBtn" disabled>
                             <i class="bi bi-upload"></i> 开始导入
                         </button>
 
@@ -76,7 +102,7 @@ class ImportController
                     <div class="mf-panel__header">导入说明</div>
                     <div class="mf-panel__body">
                         <ul style="margin:0;padding-left:1.5em;line-height:2;">
-                            <li>请确保文件夹内的文件格式为支持的格式</li>
+                            <li>支持 Word、PDF、图片等多种格式</li>
                             <li>系统将自动识别合同文本并提取关键字段</li>
                             <li>使用 SiliconFlow OCR 识别图片和扫描版 PDF</li>
                             <li>使用 DeepSeek 大模型进行语义校验</li>
@@ -87,6 +113,243 @@ class ImportController
                 </div>
             </div>
         </div>
+
+        <style>
+        #dropZone:hover, #dropZone.drag-over {
+            border-color: #6366f1;
+            background: #f0f2ff;
+        }
+        #dropZone:hover .bi, #dropZone.drag-over .bi {
+            color: #6366f1;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #ebeef5;
+            background: #fff;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-item:hover {
+            background: #f5f7fa;
+        }
+        .file-item .file-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e8f4f8;
+            border-radius: 4px;
+            margin-right: 12px;
+            color: #409eff;
+        }
+        .file-item .file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        .file-item .file-size {
+            color: #909399;
+            font-size: 12px;
+            margin-left: 12px;
+        }
+        .file-item .file-remove {
+            margin-left: 12px;
+            color: #f56c6c;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .file-item .file-remove:hover {
+            color: #f56c6c;
+        }
+        </style>
+
+        <script>
+        (function() {
+            var dropZone = document.getElementById('dropZone');
+            var fileInput = document.getElementById('fileInput');
+            var fileList = document.getElementById('fileList');
+            var fileListContent = document.getElementById('fileListContent');
+            var fileCount = document.getElementById('fileCount');
+            var submitBtn = document.getElementById('submitBtn');
+            var selectedFiles = [];
+
+            // 点击上传区域触发文件选择
+            dropZone.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // 拖拽效果
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            // 文件选择变化
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+
+            function handleFiles(files) {
+                var allowedExts = ['doc', 'docx', 'pdf', 'jpg', 'jpeg', 'png', 'webp'];
+
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    var ext = file.name.split('.').pop().toLowerCase();
+
+                    if (allowedExts.indexOf(ext) === -1) {
+                        continue;
+                    }
+
+                    // 检查是否已存在
+                    var exists = selectedFiles.some(function(f) {
+                        return f.name === file.name && f.size === file.size;
+                    });
+
+                    if (!exists) {
+                        selectedFiles.push(file);
+                    }
+                }
+
+                updateFileList();
+            }
+
+            function updateFileList() {
+                if (selectedFiles.length === 0) {
+                    fileList.style.display = 'none';
+                    submitBtn.disabled = true;
+                    return;
+                }
+
+                fileList.style.display = 'block';
+                fileCount.textContent = selectedFiles.length;
+                submitBtn.disabled = false;
+
+                var html = '';
+                var icons = {
+                    'pdf': 'bi-file-pdf',
+                    'doc': 'bi-file-word',
+                    'docx': 'bi-file-word',
+                    'jpg': 'bi-file-image',
+                    'jpeg': 'bi-file-image',
+                    'png': 'bi-file-image',
+                    'webp': 'bi-file-image'
+                };
+
+                for (var i = 0; i < selectedFiles.length; i++) {
+                    var file = selectedFiles[i];
+                    var ext = file.name.split('.').pop().toLowerCase();
+                    var icon = icons[ext] || 'bi-file';
+                    var size = formatSize(file.size);
+
+                    html += '<div class="file-item" data-index="' + i + '">';
+                    html += '<div class="file-icon"><i class="bi ' + icon + '"></i></div>';
+                    html += '<div class="file-name" title="' + escapeHtml(file.name) + '">' + escapeHtml(file.name) + '</div>';
+                    html += '<div class="file-size">' + size + '</div>';
+                    html += '<span class="file-remove" onclick="removeFile(' + i + ')"><i class="bi bi-x-lg"></i></span>';
+                    html += '</div>';
+                }
+
+                fileListContent.innerHTML = html;
+            }
+
+            window.removeFile = function(index) {
+                selectedFiles.splice(index, 1);
+                updateFileList();
+            };
+
+            function formatSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+            }
+
+            function escapeHtml(str) {
+                var div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            // 表单提交
+            document.getElementById('uploadForm').addEventListener('submit', function(e) {
+                if (selectedFiles.length === 0) {
+                    e.preventDefault();
+                    alert('请选择要导入的文件');
+                    return;
+                }
+
+                // 创建新的 FormData
+                var formData = new FormData();
+                formData.append('csrf', document.querySelector('input[name="csrf"]').value);
+
+                for (var i = 0; i < selectedFiles.length; i++) {
+                    formData.append('files[]', selectedFiles[i]);
+                }
+
+                // 使用 AJAX 上传
+                e.preventDefault();
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 正在上传识别中...';
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '<?= url('import/process-files.php') ?>');
+
+                xhr.onload = function() {
+                    console.log('Response:', xhr.responseText);
+                    if (xhr.status === 200) {
+                        try {
+                            var resp = JSON.parse(xhr.responseText);
+                            if (resp.redirect) {
+                                window.location.href = resp.redirect;
+                            } else if (resp.need_login) {
+                                alert('登录已过期，请重新登录');
+                                window.location.href = '<?= url('login.php') ?>';
+                            } else if (resp.error) {
+                                alert('导入失败：' + resp.error);
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
+                            } else if (resp.success) {
+                                window.location.href = '<?= url('import/review.php') ?>';
+                            }
+                        } catch (ex) {
+                            console.error('Parse error:', ex);
+                            alert('服务器响应格式错误：' + xhr.responseText.substring(0, 200));
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
+                        }
+                    } else {
+                        alert('上传失败(HTTP ' + xhr.status + ')，请重试');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
+                    }
+                };
+
+                xhr.onerror = function() {
+                    alert('网络错误，请重试');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
+                };
+
+                xhr.send(formData);
+            });
+        })();
+        </script>
         <?php
         $content = ob_get_clean();
         require dirname(__DIR__, 2) . '/includes/layout.php';

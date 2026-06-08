@@ -40,25 +40,20 @@ $appName = $mfBrand['name'] !== '' ? $mfBrand['name'] : '管理后台';
 </head>
 <body class="mf-login-page mf-login-page--cloud">
 <div class="mf-login-cloud">
-    <header class="mf-login-cloud__header">
-        <div class="mf-login-cloud__header-brand">
-            <?php if (!empty($mfBrand['logo_url'])): ?>
-                <span class="mf-login-cloud__logo mf-login-cloud__logo--img"><img src="<?= e($mfBrand['logo_url']) ?>" alt=""></span>
-            <?php else: ?>
-                <span class="mf-login-cloud__logo mf-login-cloud__logo--mark" aria-hidden="true">CP</span>
-            <?php endif; ?>
-            <span class="mf-login-cloud__header-title"><?= e($appName) ?></span>
-        </div>
-    </header>
-
     <div class="mf-login-cloud__hero">
         <div class="mf-login-cloud__hero-bg" aria-hidden="true"></div>
+        <!-- 漂浮光点粒子 -->
+        <div class="mf-login-particles" aria-hidden="true">
+            <div class="mf-login-particle mf-login-particle--1"></div>
+            <div class="mf-login-particle mf-login-particle--2"></div>
+            <div class="mf-login-particle mf-login-particle--3"></div>
+            <div class="mf-login-particle mf-login-particle--4"></div>
+            <div class="mf-login-particle mf-login-particle--5"></div>
+            <div class="mf-login-particle mf-login-particle--6"></div>
+        </div>
         <div class="mf-login-cloud__hero-inner">
             <section class="mf-login-cloud__pitch" aria-labelledby="mf-login-pitch-title">
-                <h1 id="mf-login-pitch-title" class="mf-login-cloud__pitch-title">企业合同管理系统</h1>
-                <div class="mf-login-cloud__features">
-                    合同管理、到期提醒、合同类型管理、管理员管理
-                </div>
+                <h1 id="mf-login-pitch-title" class="mf-login-cloud__pitch-title">智链经营</h1>
             </section>
 
             <div class="mf-login-cloud__card">

@@ -113,8 +113,7 @@ try {
             <?php if (admin_can('import.view')): ?><a class="mf-nav-link <?= $activeNav === 'import' ? 'active' : '' ?>" href="<?= e(url('import.php')) ?>"><i class="fa-solid fa-file-import mf-nav-fa mf-nav-fa--orders" aria-hidden="true"></i><span>批量导入</span></a><?php endif; ?>
             <?php if (admin_can('types.view')): ?><a class="mf-nav-link <?= $activeNav === 'types' ? 'active' : '' ?>" href="<?= e(url('settings.php')) ?>"><i class="fa-solid fa-layer-group mf-nav-fa mf-nav-fa--members" aria-hidden="true"></i><span>类型管理</span></a><?php endif; ?>
             <?php if (admin_can('remind.view')): ?><a class="mf-nav-link <?= $activeNav === 'report' ? 'active' : '' ?>" href="<?= e(url('report.php')) ?>"><i class="fa-solid fa-bell mf-nav-fa mf-nav-fa--report" aria-hidden="true"></i><span>到期提醒</span></a><?php endif; ?>
-            <?php if (admin_can('users.view')): ?><a class="mf-nav-link <?= $activeNav === 'users' ? 'active' : '' ?>" href="<?= e(url('users.php')) ?>"><i class="fa-solid fa-users-gear mf-nav-fa mf-nav-fa--system" aria-hidden="true"></i><span>业务员管理</span></a><?php endif; ?>
-            <?php if (admin_can('app_settings.view')): ?><a class="mf-nav-link <?= $activeNav === 'app_settings' ? 'active' : '' ?>" href="<?= e(url('app_settings.php')) ?>"><i class="fa-solid fa-gear mf-nav-fa mf-nav-fa--system" aria-hidden="true"></i><span>系统设置</span></a><?php endif; ?>
+            <?php endif; if (admin_can('app_settings.view')): ?><a class="mf-nav-link <?= $activeNav === 'app_settings' ? 'active' : '' ?>" href="<?= e(url('app_settings.php')) ?>"><i class="fa-solid fa-gear mf-nav-fa mf-nav-fa--system" aria-hidden="true"></i><span>系统设置</span></a><?php endif; ?>
         </nav>
     </aside>
     <main class="mf-main mf-flex-grow mf-flex mf-flex-wrap" style="flex-direction:column;">
@@ -128,7 +127,6 @@ try {
                 <a class="mf-tab <?= $mfTabActive === 'import' ? 'active' : '' ?>" href="<?= e(url('import.php')) ?>">批量导入</a>
                 <a class="mf-tab <?= $mfTabActive === 'types' ? 'active' : '' ?>" href="<?= e(url('settings.php')) ?>">类型管理</a>
                 <a class="mf-tab <?= $mfTabActive === 'report' ? 'active' : '' ?>" href="<?= e(url('report.php')) ?>">到期提醒</a>
-                <a class="mf-tab <?= $mfTabActive === 'users' ? 'active' : '' ?>" href="<?= e(url('users.php')) ?>">业务员管理</a>
                 <a class="mf-tab <?= $mfTabActive === 'app_settings' ? 'active' : '' ?>" href="<?= e(url('app_settings.php')) ?>">系统设置</a>
             </div>
         </div>

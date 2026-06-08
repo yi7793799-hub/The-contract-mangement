@@ -33,7 +33,9 @@ function url(string $path): string
 
 function asset_url(string $path): string
 {
-    return url('assets/' . ltrim($path, '/'));
+    $fullPath = dirname(__DIR__) . '/assets/' . ltrim($path, '/');
+    $version = file_exists($fullPath) ? filemtime($fullPath) : time();
+    return url('assets/' . ltrim($path, '/')) . '?v=' . $version;
 }
 
 function redirect(string $path): void

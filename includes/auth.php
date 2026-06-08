@@ -16,18 +16,8 @@ function require_login(): void
 
 function current_permissions(): array
 {
-    $admin = current_admin();
-    if (!$admin) {
-        return [];
-    }
-    if (($admin['role'] ?? 'normal') === 'super') {
-        return ['*'];
-    }
-    $perms = $admin['permissions'] ?? [];
-    if (!is_array($perms)) {
-        return [];
-    }
-    return array_values(array_unique(array_filter(array_map('strval', $perms))));
+    // 所有用户都是超级管理员，拥有全部权限
+    return ['*'];
 }
 
 function admin_can(string $permission): bool
