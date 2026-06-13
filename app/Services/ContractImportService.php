@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Services\ContractOcrService;
+
 /**
  * 合同导入服务
  * 使用 PyMuPDF + SiliconFlow OCR + DeepSeek 进行合同识别
@@ -17,6 +19,8 @@ class ContractImportService
     private $db;
     /** @var array */
     private $config;
+    /** @var ContractOcrService|null */
+    private $ocrService = null;
 
     public function __construct()
     {
@@ -221,8 +225,23 @@ class ContractImportService
      */
     private function extractText(string $filePath): string
     {
-        $result = $this->parser->parse($filePath);
-        return $result['text'] ?? '';
+        if ($this->ocrService === null) {
+            $this->ocrService = new ContractOcrService();
+        }
+
+        try {
+            $result = $this->ocrService->recognize($filePath);
+
+            if (!$result->success) {
+                error_log("OCR置信度不足: {$result->overallConfidence}% for {$filePath}");
+            }
+
+            return $result->fullText;
+        } catch (\Exception $e) {
+            error_log("OCR服务失败，回退到传统解析: " . $e->getMessage());
+            $parseResult = $this->parser->parse($filePath);
+            return $parseResult['text'] ?? '';
+        }
     }
 
     /**
