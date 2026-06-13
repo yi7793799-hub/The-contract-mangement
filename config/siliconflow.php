@@ -15,9 +15,9 @@ return [
     'model' => 'deepseek-ai/DeepSeek-V3',
 
     // OCR 模型 (用于图片识别)
-    // Qwen/Qwen3-VL-8B-Instruct: 视觉模型，OCR效果好
-    // deepseek-ai/DeepSeek-OCR: OCR专用模型
-    'ocr_model' => 'deepseek-ai/DeepSeek-OCR',
+    // Qwen/Qwen3-VL-8B-Instruct: 视觉模型，OCR效果好（推荐）
+    // deepseek-ai/DeepSeek-OCR: OCR专用模型（效果不佳）
+    'ocr_model' => 'Qwen/Qwen3-VL-8B-Instruct',
 
     // API 地址
     'base_url' => 'https://api.siliconflow.cn',
