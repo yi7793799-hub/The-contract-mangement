@@ -40,11 +40,12 @@ require_once __DIR__ . '/auth.php';
 require_once $root . '/config/database.php';
 require_once __DIR__ . '/site_branding.php';
 
-// Simple autoloader for app/Controllers and app/Services
+// Simple autoloader for app/Controllers, app/Services, and app/DTO
 spl_autoload_register(function (string $class) {
     $prefixes = [
         'App\\Controllers\\' => '/app/Controllers/',
         'App\\Services\\' => '/app/Services/',
+        'App\\DTO\\' => '/app/DTO/',
     ];
     foreach ($prefixes as $prefix => $path) {
         if (strpos($class, $prefix) === 0) {
