@@ -140,6 +140,59 @@ class ContractOcrService
     }
 
     /**
+     * 识别合同文档并保存全文到文件
+     *
+     * @param string $filePath 源文件路径
+     * @param string|null $outputPath 输出文件路径（默认保存到 uploads/ocr_text/ 目录）
+     * @return array ['result' => RecognitionResult, 'output_file' => string]
+     * @throws Exception
+     */
+    public function recognizeAndSaveText(string $filePath, ?string $outputPath = null): array
+    {
+        // 执行识别
+        $result = $this->recognize($filePath);
+
+        // 如果识别失败，直接返回
+        if (!$result->success || empty($result->fullText)) {
+            return [
+                'result' => $result,
+                'output_file' => null,
+            ];
+        }
+
+        // 生成输出路径
+        if ($outputPath === null) {
+            $baseName = pathinfo($filePath, PATHINFO_FILENAME);
+            $outputDir = dirname(__DIR__, 2) . '/uploads/ocr_text';
+
+            // 确保目录存在
+            if (!is_dir($outputDir)) {
+                mkdir($outputDir, 0755, true);
+            }
+
+            $outputPath = $outputDir . '/' . $baseName . '_全文.txt';
+        }
+
+        // 确保输出目录存在
+        $outputDir = dirname($outputPath);
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
+
+        // 保存全文
+        $written = file_put_contents($outputPath, $result->fullText);
+
+        if ($written === false) {
+            throw new Exception('无法保存全文到文件: ' . $outputPath);
+        }
+
+        return [
+            'result' => $result,
+            'output_file' => $outputPath,
+        ];
+    }
+
+    /**
      * 验证文件
      *
      * @param string $filePath 文件路径
