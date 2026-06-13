@@ -20,28 +20,27 @@ def preprocess(input_path: str, output_path: str) -> None:
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"输入文件不存在: {input_path}")
 
-    img = Image.open(input_path)
+    with Image.open(input_path) as img:
+        # 1. 灰度化（如果是彩色图像）
+        if img.mode != 'L':
+            img = img.convert('L')
 
-    # 1. 灰度化（如果是彩色图像）
-    if img.mode != 'L':
-        img = img.convert('L')
+        # 2. 增强对比度
+        enhancer = ImageEnhance.Contrast(img)
+        img = enhancer.enhance(1.5)
 
-    # 2. 增强对比度
-    enhancer = ImageEnhance.Contrast(img)
-    img = enhancer.enhance(1.5)
+        # 3. 降噪
+        img = img.filter(ImageFilter.MedianFilter(3))
 
-    # 3. 降噪
-    img = img.filter(ImageFilter.MedianFilter(3))
+        # 4. 锐化
+        img = img.filter(ImageFilter.SHARPEN)
 
-    # 4. 锐化
-    img = img.filter(ImageFilter.SHARPEN)
+        # 确保输出目录存在
+        output_dir = os.path.dirname(output_path)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
-    # 确保输出目录存在
-    output_dir = os.path.dirname(output_path)
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    img.save(output_path)
+        img.save(output_path)
 
 
 def preprocess_image(input_path: str, output_path: str) -> str:
