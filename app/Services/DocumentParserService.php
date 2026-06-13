@@ -222,7 +222,7 @@ class DocumentParserService
         $outputFile = $this->scriptDir . '/pdf_output_' . md5($filePath) . '.json';
 
         $scriptPathReal = $this->scriptDir . '/pdf_extractor.py';
-        $cmd = $this->pythonPath . ' ' . escapeshellarg($scriptPathReal) . ' ' . escapeshellarg($tempPdfPath) . ' ' . escapeshellarg($outputFile) . ' 2>&1';
+        $cmd = escapeshellarg($this->pythonPath) . ' ' . escapeshellarg($scriptPathReal) . ' ' . escapeshellarg($tempPdfPath) . ' ' . escapeshellarg($outputFile) . ' 2>&1';
         shell_exec($cmd);
 
         @unlink($tempPdfPath);
