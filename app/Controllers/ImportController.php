@@ -169,6 +169,13 @@ class ImportController
         }
         </style>
 
+        <style>
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        </style>
+
         <script>
         (function() {
             var dropZone = document.getElementById('dropZone');
@@ -294,6 +301,40 @@ class ImportController
                     return;
                 }
 
+                // 计算总文件大小
+                var totalSize = 0;
+                var maxFileSize = 500 * 1024 * 1024; // 500MB 单文件限制
+                var maxTotalSize = 500 * 1024 * 1024; // 500MB 总大小限制
+                var oversizedFiles = [];
+
+                for (var i = 0; i < selectedFiles.length; i++) {
+                    totalSize += selectedFiles[i].size;
+                    if (selectedFiles[i].size > maxFileSize) {
+                        oversizedFiles.push(selectedFiles[i].name + ' (' + formatSize(selectedFiles[i].size) + ')');
+                    }
+                }
+
+                // 检查单个文件是否超限
+                if (oversizedFiles.length > 0) {
+                    e.preventDefault();
+                    alert('以下文件超过 500MB 限制，无法上传：\n\n' + oversizedFiles.join('\n') + '\n\n请压缩文件或拆分后重试。');
+                    return;
+                }
+
+                // 检查总大小是否超限
+                if (totalSize > maxTotalSize) {
+                    e.preventDefault();
+                    alert('文件总大小 ' + formatSize(totalSize) + ' 超过 500MB 限制。\n\n请减少文件数量或压缩后重试。');
+                    return;
+                }
+
+                // 大文件警告（超过 100MB 提示）
+                if (totalSize > 100 * 1024 * 1024) {
+                    if (!confirm('您选择的文件总大小约 ' + formatSize(totalSize) + '，处理可能需要较长时间。\n\n确定继续上传吗？')) {
+                        return;
+                    }
+                }
+
                 // 创建新的 FormData
                 var formData = new FormData();
                 formData.append('csrf', document.querySelector('input[name="csrf"]').value);
@@ -305,49 +346,230 @@ class ImportController
                 // 使用 AJAX 上传
                 e.preventDefault();
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 正在上传识别中...';
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> 正在上传...';
+
+                // 显示进度区域
+                var progressArea = document.getElementById('progressArea');
+                if (!progressArea) {
+                    progressArea = document.createElement('div');
+                    progressArea.id = 'progressArea';
+                    progressArea.style.marginTop = '16px';
+                    document.getElementById('uploadForm').appendChild(progressArea);
+                }
+                progressArea.innerHTML = '<div style="padding:16px;background:#f8f9fa;border-radius:8px;"><div style="margin-bottom:8px;"><span id="uploadStatus">正在上传文件...</span></div><div style="background:#e9ecef;border-radius:4px;height:8px;"><div id="uploadProgressBar" style="background:#6366f1;height:100%;border-radius:4px;width:0%;transition:width 0.3s;"></div></div></div>';
 
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', '<?= url('import/process-files.php') ?>');
+
+                // 上传超时设置为5分钟（上传完成后进入轮询模式）
+                xhr.timeout = 300000;
+
+                // 上传进度
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        var percent = Math.round((e.loaded / e.total) * 100);
+                        document.getElementById('uploadProgressBar').style.width = percent + '%';
+                        document.getElementById('uploadStatus').textContent = '正在上传... ' + percent + '% (' + formatSize(e.loaded) + ' / ' + formatSize(e.total) + ')';
+                    }
+                };
 
                 xhr.onload = function() {
                     console.log('Response:', xhr.responseText);
                     if (xhr.status === 200) {
                         try {
                             var resp = JSON.parse(xhr.responseText);
-                            if (resp.redirect) {
-                                window.location.href = resp.redirect;
-                            } else if (resp.need_login) {
+                            if (resp.need_login) {
                                 alert('登录已过期，请重新登录');
                                 window.location.href = '<?= url('login.php') ?>';
                             } else if (resp.error) {
-                                alert('导入失败：' + resp.error);
+                                var errorMsg = resp.error;
+                                if (resp.details && resp.details.length > 0) {
+                                    errorMsg += '<br><small>' + escapeHtml(resp.details.join('; ')) + '</small>';
+                                }
+                                progressArea.innerHTML = '<div class="mf-alert mf-alert--danger"><i class="bi bi-exclamation-circle"></i> ' + errorMsg + '</div>';
                                 submitBtn.disabled = false;
                                 submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
+                            } else if (resp.success && resp.job_id) {
+                                // 异步模式：开始轮询进度
+                                startProgressPolling(resp.job_id, resp.total_files || selectedFiles.length);
+                            } else if (resp.redirect) {
+                                // 兼容旧模式
+                                document.getElementById('uploadStatus').textContent = '导入完成，正在跳转...';
+                                window.location.href = resp.redirect;
                             } else if (resp.success) {
-                                window.location.href = '<?= url('import/review.php') ?>';
+                                document.getElementById('uploadStatus').innerHTML = '<span style="color:#28a745;"><i class="bi bi-check-circle"></i> 导入完成！</span>';
+                                document.getElementById('uploadProgressBar').style.width = '100%';
+                                document.getElementById('uploadProgressBar').style.background = '#28a745';
+                                setTimeout(function() {
+                                    window.location.href = '<?= url('import/review.php') ?>';
+                                }, 1000);
                             }
                         } catch (ex) {
                             console.error('Parse error:', ex);
-                            alert('服务器响应格式错误：' + xhr.responseText.substring(0, 200));
+                            progressArea.innerHTML = '<div class="mf-alert mf-alert--danger">服务器响应格式错误：' + escapeHtml(xhr.responseText.substring(0, 200)) + '</div>';
                             submitBtn.disabled = false;
                             submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
                         }
                     } else {
-                        alert('上传失败(HTTP ' + xhr.status + ')，请重试');
+                        progressArea.innerHTML = '<div class="mf-alert mf-alert--danger">上传失败 (HTTP ' + xhr.status + ')，请重试</div>';
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
                     }
                 };
 
                 xhr.onerror = function() {
-                    alert('网络错误，请重试');
+                    progressArea.innerHTML = '<div class="mf-alert mf-alert--danger">网络错误，请重试</div>';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
+                };
+
+                xhr.ontimeout = function() {
+                    progressArea.innerHTML = '<div class="mf-alert mf-alert--warning"><i class="bi bi-clock"></i> 上传超时，请检查网络连接后重试</div>';
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
                 };
 
                 xhr.send(formData);
             });
+
+            // 进度轮询函数
+            function startProgressPolling(jobId, totalFiles) {
+                var pollInterval = 2000; // 2秒轮询一次
+                var maxPolls = 1800; // 最多轮询1小时（1800 * 2秒）
+                var pollCount = 0;
+
+                // 更新UI显示处理中状态
+                var progressArea = document.getElementById('progressArea');
+                progressArea.innerHTML = '\
+                    <div style="padding:16px;background:#f8f9fa;border-radius:8px;">\
+                        <div style="margin-bottom:8px;">\
+                            <span id="processStatus">正在处理文件...</span>\
+                            <span id="processCount" style="float:right;color:#6c757d;"></span>\
+                        </div>\
+                        <div style="background:#e9ecef;border-radius:4px;height:12px;margin-bottom:12px;">\
+                            <div id="processProgressBar" style="background:#6366f1;height:100%;border-radius:4px;width:0%;transition:width 0.3s;"></div>\
+                        </div>\
+                        <div id="processDetails" style="font-size:13px;color:#6c757d;max-height:150px;overflow-y:auto;"></div>\
+                    </div>';
+
+                var progressBar = document.getElementById('processProgressBar');
+                var statusText = document.getElementById('processStatus');
+                var countText = document.getElementById('processCount');
+                var detailsDiv = document.getElementById('processDetails');
+
+                function poll() {
+                    pollCount++;
+                    if (pollCount > maxPolls) {
+                        statusText.innerHTML = '<span style="color:#dc3545;"><i class="bi bi-exclamation-triangle"></i> 轮询超时，请刷新页面查看状态</span>';
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
+                        return;
+                    }
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', '<?= url('api/import-status.php') ?>?job_id=' + jobId, true);
+                    xhr.timeout = 10000; // 10秒超时
+
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+
+                                if (data.error) {
+                                    statusText.innerHTML = '<span style="color:#dc3545;"><i class="bi bi-exclamation-circle"></i> ' + escapeHtml(data.error) + '</span>';
+                                    submitBtn.disabled = false;
+                                    submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
+                                    return;
+                                }
+
+                                var job = data.job || {};
+                                var progress = data.progress || 0;
+                                var processed = data.processed || 0;
+
+                                // 更新进度条
+                                progressBar.style.width = progress + '%';
+                                countText.textContent = processed + ' / ' + (job.total_files || totalFiles);
+
+                                // 更新状态文字
+                                var statusHtml = '';
+                                if (job.status === 'pending') {
+                                    statusHtml = '<i class="bi bi-hourglass"></i> 等待处理...';
+                                } else if (job.status === 'processing') {
+                                    statusHtml = '<i class="bi bi-gear-fill" style="animation:spin 1s linear infinite;"></i> 正在处理... ' + progress.toFixed(1) + '%';
+                                } else if (job.status === 'completed') {
+                                    // 处理完成
+                                    progressBar.style.background = '#28a745';
+                                    statusHtml = '<span style="color:#28a745;"><i class="bi bi-check-circle-fill"></i> 处理完成！</span>';
+
+                                    // 显示统计
+                                    var stats = [];
+                                    if (job.success_count > 0) stats.push('成功 ' + job.success_count);
+                                    if (job.pending_count > 0) stats.push('待审核 ' + job.pending_count);
+                                    if (job.failed_count > 0) stats.push('<span style="color:#dc3545;">失败 ' + job.failed_count + '</span>');
+
+                                    detailsDiv.innerHTML = '<strong>结果：</strong>' + stats.join(' | ');
+
+                                    // 2秒后跳转
+                                    setTimeout(function() {
+                                        window.location.href = '<?= url('import/review.php') ?>';
+                                    }, 2000);
+                                    return; // 停止轮询
+                                } else if (job.status === 'failed') {
+                                    progressBar.style.background = '#dc3545';
+                                    statusHtml = '<span style="color:#dc3545;"><i class="bi bi-x-circle-fill"></i> 处理失败</span>';
+                                    submitBtn.disabled = false;
+                                    submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
+                                    return;
+                                }
+
+                                statusText.innerHTML = statusHtml;
+
+                                // 显示最近处理的文件
+                                if (data.files && data.files.length > 0) {
+                                    var filesHtml = '';
+                                    var recentFiles = data.files.slice(0, 5);
+                                    for (var i = 0; i < recentFiles.length; i++) {
+                                        var f = recentFiles[i];
+                                        var icon = f.status === 'success' ? '✓' : (f.status === 'failed' ? '✗' : '…');
+                                        var color = f.status === 'success' ? '#28a745' : (f.status === 'failed' ? '#dc3545' : '#6c757d');
+                                        filesHtml += '<div style="padding:4px 0;border-bottom:1px solid #eee;">\
+                                            <span style="color:' + color + ';">' + icon + '</span> ' + escapeHtml(f.file_name) +
+                                            (f.confidence ? ' <small style="color:#999;">(' + f.confidence + '%)</small>' : '') +
+                                            (f.error_message ? ' <small style="color:#dc3545;">' + escapeHtml(f.error_message) + '</small>' : '') +
+                                        '</div>';
+                                    }
+                                    detailsDiv.innerHTML = filesHtml;
+                                }
+
+                                // 继续轮询
+                                setTimeout(poll, pollInterval);
+
+                            } catch (ex) {
+                                console.error('Poll parse error:', ex);
+                                setTimeout(poll, pollInterval);
+                            }
+                        } else {
+                            console.error('Poll HTTP error:', xhr.status);
+                            setTimeout(poll, pollInterval);
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        console.error('Poll network error');
+                        setTimeout(poll, pollInterval);
+                    };
+
+                    xhr.ontimeout = function() {
+                        console.error('Poll timeout');
+                        setTimeout(poll, pollInterval);
+                    };
+
+                    xhr.send();
+                }
+
+                // 开始轮询
+                setTimeout(poll, 1000);
+            }
         })();
         </script>
         <?php

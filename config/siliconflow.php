@@ -7,6 +7,11 @@ return [
     // API Key
     'api_key' => 'sk-aseznbkvypgobpjyxmwrfuvjgbenrzcwsotdjsivncoxtigy',
 
+    // OCR 提供商选择
+    // 'siliconflow': 使用 SiliconFlow 平台的 Qwen3-VL-8B
+    // 'gitee': 使用 Gitee AI 平台的 DeepSeek-OCR-2（推荐）
+    'ocr_provider' => 'gitee',
+
     // 模型选择
     // deepseek-ai/DeepSeek-V4-Pro: 最新最强模型
     // deepseek-ai/DeepSeek-V3: 高性价比

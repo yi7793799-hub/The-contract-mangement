@@ -29,6 +29,9 @@ class ContractOcrService
     /** @var SiliconFlowService */
     private $siliconflow;
 
+    /** @var GiteeAIService|null */
+    private $giteeAi;
+
     /** @var ConfidenceCalculator */
     private $confidenceCalculator;
 
@@ -38,6 +41,9 @@ class ContractOcrService
     /** @var array */
     private $config;
 
+    /** @var string OCR 提供商: 'siliconflow' 或 'gitee' */
+    private $ocrProvider = 'gitee';
+
     /**
      * 构造函数
      * 从 config/siliconflow.php 加载配置
@@ -45,13 +51,18 @@ class ContractOcrService
     public function __construct(
         ?DocumentParserService $parser = null,
         ?SiliconFlowService $siliconflow = null,
-        ?ConfidenceCalculator $confidenceCalculator = null
+        ?ConfidenceCalculator $confidenceCalculator = null,
+        ?GiteeAIService $giteeAi = null
     ) {
         $this->config = $this->loadConfig();
         $this->parser = $parser ?? new DocumentParserService();
         $this->siliconflow = $siliconflow ?? new SiliconFlowService();
+        $this->giteeAi = $giteeAi ?? new GiteeAIService();
         $this->confidenceCalculator = $confidenceCalculator ?? new ConfidenceCalculator();
         $this->targetConfidence = (float) ($this->config['target_confidence'] ?? self::DEFAULT_TARGET_CONFIDENCE);
+
+        // 从配置读取 OCR 提供商
+        $this->ocrProvider = $this->config['ocr_provider'] ?? 'gitee';
     }
 
     /**
@@ -190,6 +201,47 @@ class ContractOcrService
             'result' => $result,
             'output_file' => $outputPath,
         ];
+    }
+
+    /**
+     * 使用 Gitee AI DeepSeek-OCR-2 识别图片
+     * 适用于扫描版合同图片
+     *
+     * @param string $imagePath 图片路径
+     * @param bool $structured 是否返回结构化格式
+     * @return array ['text' => string, 'error' => string|null]
+     */
+    public function ocrImageWithGitee(string $imagePath, bool $structured = false): array
+    {
+        if ($this->giteeAi === null) {
+            return ['text' => '', 'error' => 'Gitee AI 服务未初始化'];
+        }
+
+        if ($structured) {
+            return $this->giteeAi->ocrContractStructured($imagePath);
+        }
+
+        return $this->giteeAi->ocrImage($imagePath);
+    }
+
+    /**
+     * 设置 OCR 提供商
+     *
+     * @param string $provider 'siliconflow' 或 'gitee'
+     */
+    public function setOcrProvider(string $provider): void
+    {
+        $this->ocrProvider = $provider;
+    }
+
+    /**
+     * 获取当前 OCR 提供商
+     *
+     * @return string
+     */
+    public function getOcrProvider(): string
+    {
+        return $this->ocrProvider;
     }
 
     /**

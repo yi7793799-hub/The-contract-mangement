@@ -638,3 +638,62 @@ function siliconflow_config(): array
     }
     return $c;
 }
+
+/**
+ * 获取 PHP 可执行文件路径
+ * 用于后台启动 worker 脚本
+ */
+function php_executable_path(): string
+{
+    static $path = null;
+    if ($path !== null) {
+        return $path;
+    }
+
+    // 尝试从配置中获取
+    $config = app_config();
+    if (isset($config['php_path']) && file_exists($config['php_path'])) {
+        $path = $config['php_path'];
+        return $path;
+    }
+
+    // phpStudy 默认路径
+    $phpStudyPaths = [
+        '/d/phpStudy/PHPTutorial/php/php-7.2.1-nts/php.exe',
+        'D:/phpStudy/PHPTutorial/php/php-7.2.1-nts/php.exe',
+    ];
+
+    foreach ($phpStudyPaths as $p) {
+        $normalized = str_replace('/d/', 'D:/', $p);
+        if (file_exists($normalized)) {
+            $path = $normalized;
+            return $path;
+        }
+    }
+
+    // Windows 系统尝试从 PATH 中查找
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        $result = shell_exec('where php 2>nul');
+        if ($result) {
+            $paths = explode("\n", trim($result));
+            foreach ($paths as $p) {
+                $p = trim($p);
+                if (file_exists($p)) {
+                    $path = $p;
+                    return $path;
+                }
+            }
+        }
+    } else {
+        // Linux/Mac
+        $result = shell_exec('which php 2>/dev/null');
+        if ($result && file_exists(trim($result))) {
+            $path = trim($result);
+            return $path;
+        }
+    }
+
+    // 默认返回 'php'（依赖系统 PATH）
+    $path = 'php';
+    return $path;
+}

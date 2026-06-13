@@ -1,15 +1,31 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * 合同批量导入处理接口（异步模式）
+ *
+ * 流程：
+ * 1. 接收上传文件
+ * 2. 创建导入任务，立即返回 job_id
+ * 3. 后台启动 worker 处理
+ * 4. 前端轮询 import-status API 获取进度
+ */
+
 // 设置响应头为JSON
 header('Content-Type: application/json; charset=utf-8');
 
+// 增加超时时间（用于文件上传阶段）
+set_time_limit(300);
+ini_set('memory_limit', '512M');
+
+// 关闭 PHP 错误输出（避免污染 JSON 响应）
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../includes/bootstrap.php';
 
-use App\Services\ContractImportService;
-
 try {
-    // 检查登录 - 使用 require_login 但捕获重定向
+    // 检查登录
     $admin = current_admin();
     if (!$admin) {
         echo json_encode(['error' => '请先登录', 'need_login' => true]);
@@ -41,10 +57,10 @@ try {
         exit;
     }
 
-    // 创建临时目录存放上传的文件
-    $tempDir = sys_get_temp_dir() . '/contract_import_' . date('YmdHis') . '_' . uniqid();
-    if (!mkdir($tempDir, 0755, true)) {
-        echo json_encode(['error' => '创建临时目录失败: ' . $tempDir]);
+    // 创建任务目录存放上传的文件
+    $jobDir = dirname(__DIR__) . '/uploads/import_jobs/' . date('YmdHis') . '_' . uniqid();
+    if (!mkdir($jobDir, 0755, true)) {
+        echo json_encode(['error' => '创建任务目录失败']);
         exit;
     }
 
@@ -72,7 +88,7 @@ try {
                 UPLOAD_ERR_CANT_WRITE => '文件写入失败',
                 UPLOAD_ERR_EXTENSION => '文件上传被扩展阻止',
             ];
-            $errors[] = $name . ': ' . ($errorMessages[$error] ?? '上传失败');
+            $errors[] = $name . ': ' . ($errorMessages[$error] ?? '上传失败(error=' . $error . ')');
             continue;
         }
 
@@ -83,8 +99,8 @@ try {
             continue;
         }
 
-        // 移动文件到临时目录
-        $destPath = $tempDir . '/' . basename($name);
+        // 移动文件到任务目录
+        $destPath = $jobDir . '/' . basename($name);
         if (move_uploaded_file($tmpName, $destPath)) {
             $uploadedFiles[] = $destPath;
         } else {
@@ -93,31 +109,73 @@ try {
     }
 
     if (empty($uploadedFiles)) {
-        // 清理临时目录
-        @rmdir($tempDir);
-        echo json_encode(['error' => '没有有效的文件可导入。' . implode('; ', $errors)]);
+        // 清理空目录
+        @rmdir($jobDir);
+        echo json_encode(['error' => '没有有效的文件可导入', 'details' => $errors]);
         exit;
     }
 
-    // 调用导入服务处理文件
-    $admin = current_admin();
+    // 创建导入任务
     $adminId = $admin['id'] ?? 0;
-
     if ($adminId <= 0) {
         echo json_encode(['error' => '请先登录']);
         exit;
     }
 
-    $service = new ContractImportService();
-    $jobId = $service->processFiles($uploadedFiles, $adminId, $tempDir);
+    $stmt = db()->prepare(
+        "INSERT INTO import_jobs (folder_name, total_files, created_by, status) VALUES (?, ?, ?, 'pending')"
+    );
+    $stmt->execute([basename($jobDir), count($uploadedFiles), $adminId]);
+    $jobId = (int) db()->lastInsertId();
 
-    // 返回结果
+    // 保存文件记录
+    foreach ($uploadedFiles as $filePath) {
+        $stmt = db()->prepare(
+            "INSERT INTO import_files (job_id, file_name, file_path, file_type, status) VALUES (?, ?, ?, ?, 'pending')"
+        );
+        $stmt->execute([
+            $jobId,
+            basename($filePath),
+            $filePath,
+            pathinfo($filePath, PATHINFO_EXTENSION),
+        ]);
+    }
+
+    // 异步启动处理脚本
+    $phpPath = php_executable_path();
+    $workerScript = dirname(__DIR__) . '/scripts/import-worker.php';
+
+    // Windows 下使用 start /B 后台运行
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        $cmd = sprintf(
+            'start /B "" %s %s %d',
+            escapeshellarg($phpPath),
+            escapeshellarg($workerScript),
+            $jobId
+        );
+        pclose(popen($cmd, 'r'));
+    } else {
+        // Linux/Mac
+        $cmd = sprintf(
+            '%s %s %d > /dev/null 2>&1 &',
+            escapeshellarg($phpPath),
+            escapeshellarg($workerScript),
+            $jobId
+        );
+        exec($cmd);
+    }
+
+    // 立即返回任务 ID（异步模式）
     echo json_encode([
         'success' => true,
-        'message' => '导入任务已启动',
-        'redirect' => url('import/review.php')
+        'job_id' => $jobId,
+        'total_files' => count($uploadedFiles),
+        'poll_url' => url('api/import-status.php?job_id=' . $jobId),
+        'message' => '任务已创建，正在后台处理',
+        'errors' => $errors, // 可能有部分文件上传失败的提示
     ]);
 
 } catch (Throwable $e) {
+    error_log('Import error: ' . $e->getMessage());
     echo json_encode(['error' => '导入出错: ' . $e->getMessage()]);
 }
