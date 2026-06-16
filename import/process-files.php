@@ -141,39 +141,36 @@ try {
         ]);
     }
 
-    // 异步启动处理脚本
-    $phpPath = php_executable_path();
-    $workerScript = dirname(__DIR__) . '/scripts/import-worker.php';
-
-    // Windows 下使用 start /B 后台运行
-    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-        $cmd = sprintf(
-            'start /B "" %s %s %d',
-            escapeshellarg($phpPath),
-            escapeshellarg($workerScript),
-            $jobId
-        );
-        pclose(popen($cmd, 'r'));
-    } else {
-        // Linux/Mac
-        $cmd = sprintf(
-            '%s %s %d > /dev/null 2>&1 &',
-            escapeshellarg($phpPath),
-            escapeshellarg($workerScript),
-            $jobId
-        );
-        exec($cmd);
-    }
-
-    // 立即返回任务 ID（异步模式）
-    echo json_encode([
+    // 立即返回任务 ID，然后使用 fastcgi_finish_request 在后台处理
+    $response = json_encode([
         'success' => true,
         'job_id' => $jobId,
         'total_files' => count($uploadedFiles),
         'poll_url' => url('api/import-status.php?job_id=' . $jobId),
         'message' => '任务已创建，正在后台处理',
-        'errors' => $errors, // 可能有部分文件上传失败的提示
+        'errors' => $errors,
     ]);
+
+    // 发送响应并关闭连接
+    if (function_exists('fastcgi_finish_request')) {
+        echo $response;
+        fastcgi_finish_request();
+        // 在后台启动 worker
+        require_once dirname(__DIR__) . '/app/Services/WorkerLauncher.php';
+        $launcher = new \App\Services\WorkerLauncher();
+        $launcher->launch($jobId);
+    } else {
+        // 不支持 fastcgi_finish_request，使用异步模式
+        require_once dirname(__DIR__) . '/app/Services/WorkerLauncher.php';
+        $launcher = new \App\Services\WorkerLauncher();
+        $launchResult = $launcher->launch($jobId, 'async');
+
+        if (!$launchResult['launched']) {
+            error_log("Worker launch failed for job {$jobId}: " . ($launchResult['error'] ?? 'unknown'));
+        }
+
+        echo $response;
+    }
 
 } catch (Throwable $e) {
     error_log('Import error: ' . $e->getMessage());

@@ -51,6 +51,68 @@ use App\Services\DeepSeekService;
 use App\Services\GiteeAIService;
 
 /**
+ * 获取 Python 可执行文件路径
+ */
+function getPythonPath(): string
+{
+    // 从配置文件读取
+    $configFile = dirname(__DIR__) . '/config/config.php';
+    if (file_exists($configFile)) {
+        $config = require $configFile;
+        if (isset($config['python_path']) && file_exists($config['python_path'])) {
+            return $config['python_path'];
+        }
+    }
+
+    // Windows 下尝试多个常见路径
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        $candidates = [
+            'D:/Edge download/Python/Install/python.exe',
+            'D:/Python/python.exe',
+            'D:/Software/anaconda/python.exe',
+            'C:/Python/python.exe',
+            'C:/Python39/python.exe',
+            'C:/Python310/python.exe',
+            'C:/Python311/python.exe',
+        ];
+        foreach ($candidates as $p) {
+            if (file_exists($p)) {
+                return $p;
+            }
+        }
+        // 从 PATH 中查找
+        $result = shell_exec('where python 2>nul');
+        if ($result) {
+            $paths = explode("\n", trim($result));
+            foreach ($paths as $p) {
+                $p = trim($p);
+                // 避免使用 Windows Store 的 python.exe（它是重定向到商店的）
+                if (file_exists($p) && strpos($p, 'WindowsApps') === false) {
+                    return $p;
+                }
+            }
+        }
+    }
+
+    // 默认返回 'python'（依赖系统 PATH）
+    return 'python';
+}
+
+/**
+ * 写入日志
+ */
+function workerLog(string $message): void
+{
+    $logFile = dirname(__DIR__) . '/logs/import_worker.log';
+    $logDir = dirname($logFile);
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0755, true);
+    }
+    $timestamp = date('Y-m-d H:i:s');
+    @file_put_contents($logFile, "[{$timestamp}] {$message}\n", FILE_APPEND);
+}
+
+/**
  * 处理单个导入文件
  */
 function processImportFile(PDO $db, array $file, array $config): void
@@ -59,6 +121,8 @@ function processImportFile(PDO $db, array $file, array $config): void
     $filePath = $file['file_path'];
     $jobId = $file['job_id'];
     $userId = $file['user_id'] ?? 1;
+
+    workerLog("Processing file {$fileId}: {$file['file_name']}");
 
     // 更新状态为处理中
     $stmt = $db->prepare("UPDATE import_files SET status = 'processing', started_at = NOW() WHERE id = ?");
@@ -84,7 +148,7 @@ function processImportFile(PDO $db, array $file, array $config): void
 
             // 如果有图片（扫描版 PDF），使用 Gitee AI OCR
             if (!empty($imagePaths)) {
-                echo "[OCR] Using Gitee AI for scanned PDF...\n";
+                workerLog("[OCR] Using Gitee AI for scanned PDF with images");
                 $allText = [];
                 foreach ($imagePaths as $imgPath) {
                     $ocrResult = $giteeAi->ocrImage($imgPath);
@@ -99,13 +163,14 @@ function processImportFile(PDO $db, array $file, array $config): void
                 $text = implode("\n\n", $allText);
             } elseif (strlen(trim($text)) < 100) {
                 // 文本太少，可能是扫描版，尝试 OCR
-                echo "[OCR] Text too short, trying Gitee AI OCR...\n";
-                // PDF 转图片后 OCR
-                $tempDir = sys_get_temp_dir() . '/pdf_ocr_' . time();
+                workerLog("[OCR] Text too short (" . strlen(trim($text)) . " chars), trying Gitee AI OCR");
+                // PDF 转图片后 OCR - 使用 uniqid 确保唯一性
+                $tempDir = sys_get_temp_dir() . '/pdf_ocr_' . uniqid($fileId . '_', true);
                 if (!is_dir($tempDir)) {
                     mkdir($tempDir, 0755, true);
                 }
-                $pythonPath = 'D:/Edge download/Python/Install/python.exe';
+
+                $pythonPath = getPythonPath();
                 $scriptPath = dirname(__DIR__) . '/scripts/render_pdf_full.py';
                 $cmd = sprintf(
                     '%s %s %s %s 2>&1',
@@ -114,7 +179,9 @@ function processImportFile(PDO $db, array $file, array $config): void
                     escapeshellarg($filePath),
                     escapeshellarg($tempDir)
                 );
+                workerLog("[OCR] Executing: {$cmd}");
                 exec($cmd, $output, $returnCode);
+                workerLog("[OCR] Return code: {$returnCode}, Output: " . implode("\n", $output));
 
                 $images = glob($tempDir . '/*.png');
                 if (empty($images)) {
@@ -133,11 +200,12 @@ function processImportFile(PDO $db, array $file, array $config): void
                     }
                     $text = implode("\n\n", $allText);
                     @rmdir($tempDir);
+                    workerLog("[OCR] Extracted " . strlen($text) . " chars from " . count($images) . " images");
                 }
             }
         } elseif ($needOcr) {
             // 图片直接使用 Gitee AI OCR
-            echo "[OCR] Using Gitee AI for image...\n";
+            workerLog("[OCR] Using Gitee AI for image");
             $ocrResult = $giteeAi->ocrImage($filePath);
             if ($ocrResult['error']) {
                 throw new Exception('OCR failed: ' . $ocrResult['error']);
@@ -153,11 +221,14 @@ function processImportFile(PDO $db, array $file, array $config): void
             throw new Exception('无法从文件中提取文本');
         }
 
+        workerLog("[DeepSeek] Extracting fields from " . strlen($text) . " chars of text");
+
         // 2. 调用 DeepSeek 提取字段
         $fields = $deepseek->extractContractFields($text);
 
         // 3. 计算置信度
         $confidence = calculateConfidence($fields['confidence'] ?? []);
+        workerLog("[Result] Confidence: {$confidence}%");
 
         // 4. 创建合同记录
         $contractId = createContract($db, $fields, $text, $confidence, $jobId, $fileId, $userId, $config);
@@ -178,18 +249,19 @@ function processImportFile(PDO $db, array $file, array $config): void
         // 7. 更新任务统计
         incrementJobCount($db, $jobId, $confidence);
 
-        echo "[OK] File {$fileId}: {$file['file_name']} - confidence: {$confidence}\n";
+        workerLog("[OK] File {$fileId}: {$file['file_name']} - confidence: {$confidence}%");
 
     } catch (Exception $e) {
         // 更新失败状态
+        $errorMsg = $e->getMessage();
+        workerLog("[FAIL] File {$fileId}: {$file['file_name']} - {$errorMsg}");
+
         $stmt = $db->prepare("UPDATE import_files SET status = 'failed', error_message = ?, completed_at = NOW() WHERE id = ?");
-        $stmt->execute([$e->getMessage(), $fileId]);
+        $stmt->execute([$errorMsg, $fileId]);
 
         // 更新任务失败计数
         $stmt = $db->prepare("UPDATE import_jobs SET failed_count = failed_count + 1 WHERE id = ?");
         $stmt->execute([$jobId]);
-
-        echo "[FAIL] File {$fileId}: {$file['file_name']} - {$e->getMessage()}\n";
     }
 }
 
@@ -199,7 +271,12 @@ function calculateConfidence(array $confidences): float
         return 0;
     }
     $values = array_values($confidences);
-    return array_sum($values) / count($values);
+    // 过滤掉非数值
+    $numericValues = array_filter($values, 'is_numeric');
+    if (empty($numericValues)) {
+        return 50; // 默认中等置信度
+    }
+    return array_sum($numericValues) / count($numericValues);
 }
 
 function createContract(PDO $db, array $fields, string $ocrText, float $confidence, int $jobId, int $fileId, int $userId, array $config): int
@@ -270,7 +347,7 @@ function saveAttachment(PDO $db, string $sourcePath, int $contractId): void
          VALUES (?, ?, ?, ?, ?, NOW())"
     );
 
-    // 获取 MIME 类型（兼容无 mime_content_type 的环境）
+    // 获取 MIME 类型
     $mimeType = 'application/octet-stream';
     if (function_exists('mime_content_type')) {
         $mimeType = mime_content_type($sourcePath) ?: $mimeType;
@@ -278,7 +355,6 @@ function saveAttachment(PDO $db, string $sourcePath, int $contractId): void
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $mimeType = $finfo->file($sourcePath) ?: $mimeType;
     } else {
-        // 根据扩展名判断
         $ext = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION));
         $types = [
             'pdf' => 'application/pdf',
@@ -320,7 +396,7 @@ function incrementJobCount(PDO $db, int $jobId, float $confidence): void
 
 // ========== 主逻辑 ==========
 
-echo "Starting import worker for job {$jobId}\n";
+workerLog("Starting import worker for job {$jobId}");
 
 $db = db();
 
@@ -330,6 +406,7 @@ $stmt->execute([$jobId]);
 $job = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$job) {
+    workerLog("Job {$jobId} not found");
     echo "Job {$jobId} not found\n";
     exit(1);
 }
@@ -355,12 +432,14 @@ $stmt->execute([$jobId]);
 $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (empty($files)) {
+    workerLog("No pending files found for job {$jobId}");
     echo "No pending files found for job {$jobId}\n";
     $stmt = $db->prepare("UPDATE import_jobs SET status = 'completed', completed_at = NOW() WHERE id = ?");
     $stmt->execute([$jobId]);
     exit(0);
 }
 
+workerLog("Found " . count($files) . " files to process");
 echo "Found " . count($files) . " files to process\n";
 
 // 逐个处理文件
@@ -373,6 +452,7 @@ foreach ($files as $file) {
     $currentStatus = $stmt->fetchColumn();
 
     if ($currentStatus === 'cancelled') {
+        workerLog("Job {$jobId} was cancelled");
         echo "Job {$jobId} was cancelled\n";
         exit(0);
     }
@@ -382,4 +462,5 @@ foreach ($files as $file) {
 $stmt = $db->prepare("UPDATE import_jobs SET status = 'completed', completed_at = NOW() WHERE id = ?");
 $stmt->execute([$jobId]);
 
+workerLog("Job {$jobId} completed");
 echo "Job {$jobId} completed\n";
