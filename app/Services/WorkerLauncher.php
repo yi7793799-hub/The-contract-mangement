@@ -57,11 +57,9 @@ class WorkerLauncher
             return ['launched' => false, 'error' => 'Worker script not found'];
         }
 
-        // 自动选择模式
+        // 自动选择模式：Web 模式下使用异步模式（避免 HTTP 超时）
         if ($mode === 'auto') {
-            // Web 模式下使用同步模式（最可靠）
-            // CLI 模式下也可以使用同步模式
-            $mode = 'sync';
+            $mode = php_sapi_name() === 'cli' ? 'sync' : 'async';
         }
 
         switch ($mode) {
@@ -104,42 +102,53 @@ class WorkerLauncher
     }
 
     /**
-     * 异步执行（尝试多种方式）
-     * Windows + Apache 环境下可能不可靠
+     * 异步执行（后台启动）
+     * 不阻塞当前 HTTP 请求
      */
     private function launchAsync(int $jobId): array
     {
         $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
 
-        // 创建标记文件，让轮询脚本检测
-        $markerFile = $this->pendingJobsDir . '/job_' . $jobId . '.txt';
+        // 创建标记文件，让轮询脚本检测（作为备份方案）
+        $markerFile = $this->pendingJobsDir . '/job_' . $jobId . '.json';
         file_put_contents($markerFile, json_encode([
             'job_id' => $jobId,
             'created_at' => date('Y-m-d H:i:s'),
-        ]));
+            'php_path' => $this->phpPath,
+            'worker_script' => $this->workerScript,
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        $this->log("Job {$jobId} queued for async processing");
 
         if ($isWindows) {
-            // Windows: 尝试多种方式
-            // 方式1: start /MIN
+            // Windows: 使用 start 创建独立进程，输出重定向到日志文件
             $cmd = sprintf(
-                'start /MIN "ImportWorker%d" "%s" "%s" %d',
+                'start /MIN "Worker%d" cmd /c "%s" "%s" %d >> "%s" 2>&1',
                 $jobId,
                 $this->phpPath,
                 $this->workerScript,
-                $jobId
+                $jobId,
+                $this->logFile
             );
+            // 使用 exec 执行（不等待）
             exec($cmd);
 
-            return [
-                'launched' => true,
-                'mode' => 'async',
-                'method' => 'start_min',
-                'marker_file' => $markerFile,
-            ];
+            $this->log("Job {$jobId} launched with start /MIN");
+
+            // 备选方案：直接使用 pclose(popen) 但用完整命令
+            $altCmd = sprintf(
+                '"%s" "%s" %d >> "%s" 2>&1',
+                $this->phpPath,
+                $this->workerScript,
+                $jobId,
+                $this->logFile
+            );
+            // 立即启动，不等待
+            pclose(popen($altCmd, 'r'));
         } else {
-            // Linux/Mac
+            // Linux/Mac: 使用 nohup 后台启动
             $cmd = sprintf(
-                '"%s" "%s" %d >> "%s" 2>&1 &',
+                'nohup "%s" "%s" %d >> "%s" 2>&1 &',
                 $this->phpPath,
                 $this->workerScript,
                 $jobId,
@@ -147,12 +156,14 @@ class WorkerLauncher
             );
             exec($cmd);
 
-            return [
-                'launched' => true,
-                'mode' => 'async',
-                'method' => 'background',
-            ];
+            $this->log("Job {$jobId} launched in background (Unix)");
         }
+
+        return [
+            'launched' => true,
+            'mode' => 'async',
+            'marker_file' => $markerFile,
+        ];
     }
 
     /**
@@ -196,23 +207,25 @@ class WorkerLauncher
 
     /**
      * 查找 PHP 可执行文件路径
+     * 注意：必须找到 php.exe（CLI版本），而不是 php-cgi.exe
      */
     private function findPhpPath(): string
     {
-        // 优先使用当前运行的 PHP（最可靠）
+        // 1. 如果 PHP_BINARY 是 php.exe（CLI模式），直接使用
         if (defined('PHP_BINARY') && file_exists(PHP_BINARY)) {
-            return PHP_BINARY;
-        }
-
-        // 尝试使用函数获取
-        if (function_exists('php_executable_path')) {
-            $path = php_executable_path();
-            if ($path && file_exists($path)) {
-                return $path;
+            $binary = PHP_BINARY;
+            // 检查是否是 php.exe（而不是 php-cgi.exe）
+            if (strtolower(basename($binary)) === 'php.exe') {
+                return $binary;
+            }
+            // 如果是 php-cgi.exe，尝试在同一目录查找 php.exe
+            $phpExe = dirname($binary) . '/php.exe';
+            if (file_exists($phpExe)) {
+                return $phpExe;
             }
         }
 
-        // 从配置获取
+        // 2. 从配置获取
         if (function_exists('app_config')) {
             $config = app_config();
             if (isset($config['php_path']) && file_exists($config['php_path'])) {
@@ -220,10 +233,10 @@ class WorkerLauncher
             }
         }
 
-        // phpStudy 可能的路径（动态检测）
-        $phpStudyRoot = 'D:/phpStudy/PHPTutorial';
-        if (is_dir($phpStudyRoot . '/php')) {
-            $phpDirs = glob($phpStudyRoot . '/php/php-*');
+        // 3. phpStudy 新版路径（小皮面板）
+        $phpStudyNew = 'E:/汇总/phpstudyV8/phpstudy_pro/Extensions/php';
+        if (is_dir($phpStudyNew)) {
+            $phpDirs = glob($phpStudyNew . '/php*') ?: [];
             foreach ($phpDirs as $dir) {
                 $phpExe = $dir . '/php.exe';
                 if (file_exists($phpExe)) {
@@ -232,14 +245,26 @@ class WorkerLauncher
             }
         }
 
-        // 从 PATH 查找
+        // 4. phpStudy 旧版路径
+        $phpStudyOld = 'D:/phpStudy/PHPTutorial/php';
+        if (is_dir($phpStudyOld)) {
+            $phpDirs = glob($phpStudyOld . '/php-*') ?: [];
+            foreach ($phpDirs as $dir) {
+                $phpExe = $dir . '/php.exe';
+                if (file_exists($phpExe)) {
+                    return $phpExe;
+                }
+            }
+        }
+
+        // 5. 从 PATH 查找
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
             $result = shell_exec('where php 2>nul');
             if ($result) {
                 $paths = explode("\n", trim($result));
                 foreach ($paths as $p) {
                     $p = trim($p);
-                    if (file_exists($p)) {
+                    if (file_exists($p) && strtolower(basename($p)) === 'php.exe') {
                         return $p;
                     }
                 }

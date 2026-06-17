@@ -390,7 +390,8 @@ class ImportController
                                 submitBtn.disabled = false;
                                 submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
                             } else if (resp.success && resp.job_id) {
-                                // 异步模式：开始轮询进度
+                                // 异步模式：触发 Worker 并开始轮询进度
+                                triggerWorker(resp.job_id);
                                 startProgressPolling(resp.job_id, resp.total_files || selectedFiles.length);
                             } else if (resp.redirect) {
                                 // 兼容旧模式
@@ -411,7 +412,7 @@ class ImportController
                             submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
                         }
                     } else {
-                        progressArea.innerHTML = '<div class="mf-alert mf-alert--danger">上传失败 (HTTP ' + xhr.status + ')，请重试</div>';
+                        progressArea.innerHTML = '<div class="mf-alert mf-alert--danger">上传失败 (HTTP ' + xhr.status + ')，请重试<br><small>' + escapeHtml(xhr.responseText.substring(0, 500)) + '</small></div>';
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
                     }
@@ -432,30 +433,88 @@ class ImportController
                 xhr.send(formData);
             });
 
+            // 触发 Worker 处理（使用新的 trigger-worker 接口）
+            function triggerWorker(jobId) {
+                fetch('<?= url('api/trigger-worker.php') ?>?job_id=' + jobId, {
+                    method: 'POST'
+                }).then(function(r) {
+                    return r.json();
+                }).then(function(data) {
+                    console.log('Worker triggered:', data);
+                }).catch(function(err) {
+                    console.log('Worker trigger failed:', err);
+                    // 失败时尝试备用方式
+                    fetch('<?= url('api/process-pending.php') ?>', { method: 'POST' });
+                });
+            }
+
             // 进度轮询函数
             function startProgressPolling(jobId, totalFiles) {
                 var pollInterval = 2000; // 2秒轮询一次
                 var maxPolls = 1800; // 最多轮询1小时（1800 * 2秒）
                 var pollCount = 0;
 
-                // 更新UI显示处理中状态
+                // 更新UI显示处理中状态 - 包含处理步骤详情
                 var progressArea = document.getElementById('progressArea');
                 progressArea.innerHTML = '\
-                    <div style="padding:16px;background:#f8f9fa;border-radius:8px;">\
-                        <div style="margin-bottom:8px;">\
-                            <span id="processStatus">正在处理文件...</span>\
-                            <span id="processCount" style="float:right;color:#6c757d;"></span>\
+                    <div style="padding:20px;background:#f8f9fa;border-radius:8px;">\
+                        <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">\
+                            <span id="processStatus" style="font-weight:500;"><i class="bi bi-hourglass"></i> 正在启动处理...</span>\
+                            <span id="processCount" style="color:#6c757d;font-size:14px;"></span>\
                         </div>\
-                        <div style="background:#e9ecef;border-radius:4px;height:12px;margin-bottom:12px;">\
+                        <div style="background:#e9ecef;border-radius:4px;height:16px;margin-bottom:16px;">\
                             <div id="processProgressBar" style="background:#6366f1;height:100%;border-radius:4px;width:0%;transition:width 0.3s;"></div>\
                         </div>\
-                        <div id="processDetails" style="font-size:13px;color:#6c757d;max-height:150px;overflow-y:auto;"></div>\
+                        <!-- 处理步骤显示 -->\
+                        <div id="stepDetails" style="margin-bottom:16px;"></div>\
+                        <!-- 当前处理的文件 -->\
+                        <div id="currentFile" style="padding:10px;background:#fff;border-radius:4px;margin-bottom:12px;border:1px solid #e9ecef;"></div>\
+                        <!-- 已处理的文件列表 -->\
+                        <div id="fileList" style="font-size:13px;color:#6c757d;max-height:200px;overflow-y:auto;"></div>\
                     </div>';
 
                 var progressBar = document.getElementById('processProgressBar');
                 var statusText = document.getElementById('processStatus');
                 var countText = document.getElementById('processCount');
-                var detailsDiv = document.getElementById('processDetails');
+                var stepDetailsDiv = document.getElementById('stepDetails');
+                var currentFileDiv = document.getElementById('currentFile');
+                var fileListDiv = document.getElementById('fileList');
+
+                // 渲染处理步骤
+                function renderSteps(steps) {
+                    if (!steps || steps.length === 0) return '';
+                    var html = '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+                    for (var i = 0; i < steps.length; i++) {
+                        var s = steps[i];
+                        var iconClass = '';
+                        var bgColor = '';
+                        var textColor = '';
+
+                        if (s.status === 'done') {
+                            iconClass = 'bi-check-circle-fill';
+                            bgColor = '#d4edda';
+                            textColor = '#155724';
+                        } else if (s.status === 'doing') {
+                            iconClass = 'bi-arrow-repeat';
+                            bgColor = '#cce5ff';
+                            textColor = '#004085';
+                        } else {
+                            iconClass = 'bi-circle';
+                            bgColor = '#e9ecef';
+                            textColor = '#6c757d';
+                        }
+
+                        html += '<div style="padding:6px 12px;background:' + bgColor + ';border-radius:20px;font-size:12px;display:flex;align-items:center;gap:4px;color:' + textColor + ';">';
+                        if (s.status === 'doing') {
+                            html += '<i class="bi ' + iconClass + '" style="animation:spin 1s linear infinite;"></i>';
+                        } else {
+                            html += '<i class="bi ' + iconClass + '"></i>';
+                        }
+                        html += escapeHtml(s.step) + '</div>';
+                    }
+                    html += '</div>';
+                    return html;
+                }
 
                 function poll() {
                     pollCount++;
@@ -468,7 +527,7 @@ class ImportController
 
                     var xhr = new XMLHttpRequest();
                     xhr.open('GET', '<?= url('api/import-status.php') ?>?job_id=' + jobId, true);
-                    xhr.timeout = 10000; // 10秒超时
+                    xhr.timeout = 10000;
 
                     xhr.onload = function() {
                         if (xhr.status === 200) {
@@ -485,38 +544,70 @@ class ImportController
                                 var job = data.job || {};
                                 var progress = data.progress || 0;
                                 var processed = data.processed || 0;
+                                var total = data.total || totalFiles;
 
                                 // 更新进度条
                                 progressBar.style.width = progress + '%';
-                                countText.textContent = processed + ' / ' + (job.total_files || totalFiles);
+                                countText.textContent = processed + ' / ' + total + ' 个文件';
 
-                                // 更新状态文字
+                                // 更新步骤显示
+                                if (data.step_details) {
+                                    stepDetailsDiv.innerHTML = renderSteps(data.step_details);
+                                }
+
+                                // 更新状态文字和当前处理文件
                                 var statusHtml = '';
                                 if (job.status === 'pending') {
-                                    statusHtml = '<i class="bi bi-hourglass"></i> 等待处理...';
+                                    statusHtml = '<i class="bi bi-hourglass"></i> 正在启动后台处理任务...';
+                                    currentFileDiv.innerHTML = '<div style="color:#6c757d;text-align:center;">准备开始处理...</div>';
                                 } else if (job.status === 'processing') {
                                     statusHtml = '<i class="bi bi-gear-fill" style="animation:spin 1s linear infinite;"></i> 正在处理... ' + progress.toFixed(1) + '%';
+
+                                    // 显示当前正在处理的文件
+                                    if (data.processing_file) {
+                                        currentFileDiv.innerHTML = '\
+                                            <div style="display:flex;align-items:center;gap:8px;">\
+                                                <i class="bi bi-file-earmark-text" style="font-size:24px;color:#6366f1;"></i>\
+                                                <div>\
+                                                    <div style="font-weight:500;color:#333;">' + escapeHtml(data.processing_file) + '</div>\
+                                                    <div style="color:#6c757d;font-size:12px;">正在提取文本并识别合同字段...</div>\
+                                                </div>\
+                                                <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;color:#6366f1;margin-left:auto;"></i>\
+                                            </div>';
+                                    } else if (processed < total) {
+                                        currentFileDiv.innerHTML = '\
+                                            <div style="color:#6c757d;text-align:center;">\
+                                                <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;"></i> 准备处理下一个文件...\
+                                            </div>';
+                                    }
                                 } else if (job.status === 'completed') {
                                     // 处理完成
                                     progressBar.style.background = '#28a745';
                                     statusHtml = '<span style="color:#28a745;"><i class="bi bi-check-circle-fill"></i> 处理完成！</span>';
 
-                                    // 显示统计
-                                    var stats = [];
-                                    if (job.success_count > 0) stats.push('成功 ' + job.success_count);
-                                    if (job.pending_count > 0) stats.push('待审核 ' + job.pending_count);
-                                    if (job.failed_count > 0) stats.push('<span style="color:#dc3545;">失败 ' + job.failed_count + '</span>');
+                                    // 显示统计结果
+                                    var stats = data.stats || {};
+                                    var statsHtml = '';
+                                    if (stats.success > 0) statsHtml += '<span style="color:#28a745;"><i class="bi bi-check-circle"></i> 成功: ' + stats.success + '</span> ';
+                                    if (stats.pending_review > 0) statsHtml += '<span style="color:#ffc107;"><i class="bi bi-clock"></i> 待审核: ' + stats.pending_review + '</span> ';
+                                    if (stats.failed > 0) statsHtml += '<span style="color:#dc3545;"><i class="bi bi-x-circle"></i> 失败: ' + stats.failed + '</span>';
 
-                                    detailsDiv.innerHTML = '<strong>结果：</strong>' + stats.join(' | ');
+                                    currentFileDiv.innerHTML = '\
+                                        <div style="text-align:center;padding:10px;">\
+                                            <i class="bi bi-check-circle-fill" style="font-size:32px;color:#28a745;"></i>\
+                                            <div style="margin-top:8px;font-weight:500;">全部处理完成</div>\
+                                            <div style="margin-top:4px;font-size:13px;">' + statsHtml + '</div>\
+                                        </div>';
 
                                     // 2秒后跳转
                                     setTimeout(function() {
                                         window.location.href = '<?= url('import/review.php') ?>';
                                     }, 2000);
-                                    return; // 停止轮询
+                                    return;
                                 } else if (job.status === 'failed') {
                                     progressBar.style.background = '#dc3545';
                                     statusHtml = '<span style="color:#dc3545;"><i class="bi bi-x-circle-fill"></i> 处理失败</span>';
+                                    currentFileDiv.innerHTML = '<div style="color:#dc3545;text-align:center;">处理过程中发生错误</div>';
                                     submitBtn.disabled = false;
                                     submitBtn.innerHTML = '<i class="bi bi-upload"></i> 开始导入';
                                     return;
@@ -524,21 +615,27 @@ class ImportController
 
                                 statusText.innerHTML = statusHtml;
 
-                                // 显示最近处理的文件
+                                // 显示已处理的文件列表
                                 if (data.files && data.files.length > 0) {
-                                    var filesHtml = '';
-                                    var recentFiles = data.files.slice(0, 5);
-                                    for (var i = 0; i < recentFiles.length; i++) {
-                                        var f = recentFiles[i];
-                                        var icon = f.status === 'success' ? '✓' : (f.status === 'failed' ? '✗' : '…');
-                                        var color = f.status === 'success' ? '#28a745' : (f.status === 'failed' ? '#dc3545' : '#6c757d');
-                                        filesHtml += '<div style="padding:4px 0;border-bottom:1px solid #eee;">\
-                                            <span style="color:' + color + ';">' + icon + '</span> ' + escapeHtml(f.file_name) +
-                                            (f.confidence ? ' <small style="color:#999;">(' + f.confidence + '%)</small>' : '') +
-                                            (f.error_message ? ' <small style="color:#dc3545;">' + escapeHtml(f.error_message) + '</small>' : '') +
-                                        '</div>';
+                                    var filesHtml = '<div style="font-size:12px;color:#999;margin-bottom:8px;">已处理的文件:</div>';
+                                    // 按处理顺序显示（反转，最新的在最前面）
+                                    var processedFiles = data.files.filter(function(f) { return f.status !== 'pending' && f.status !== 'processing'; });
+                                    processedFiles.reverse();
+
+                                    for (var i = 0; i < Math.min(processedFiles.length, 10); i++) {
+                                        var f = processedFiles[i];
+                                        var icon = f.status === 'success' ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+                                        var color = f.status === 'success' ? '#28a745' : '#dc3545';
+                                        var confidence = f.confidence ? Math.round(parseFloat(f.confidence)) : null;
+
+                                        filesHtml += '<div style="padding:6px 8px;background:#fff;border-radius:4px;margin-bottom:4px;display:flex;align-items:center;gap:6px;">\
+                                            <i class="bi ' + icon + '" style="color:' + color + ';"></i>\
+                                            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;">' + escapeHtml(f.file_name) + '</span>\
+                                            ' + (confidence ? '<span style="color:#6c757d;font-size:12px;">' + confidence + '%</span>' : '') + '\
+                                            ' + (f.error_message ? '<small style="color:#dc3545;font-size:11px;">错误</small>' : '') + '\
+                                        </div>';
                                     }
-                                    detailsDiv.innerHTML = filesHtml;
+                                    fileListDiv.innerHTML = filesHtml;
                                 }
 
                                 // 继续轮询
