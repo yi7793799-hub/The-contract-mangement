@@ -331,12 +331,20 @@ function mf_ensure_contract_schema(PDO $pdo): void
             pending_count INT UNSIGNED DEFAULT 0,
             failed_count INT UNSIGNED DEFAULT 0,
             created_by INT UNSIGNED DEFAULT NULL,
+            business_type ENUM('receipt','payment') DEFAULT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             completed_at DATETIME DEFAULT NULL,
             INDEX idx_status (status),
-            INDEX idx_created_by (created_by)
+            INDEX idx_created_by (created_by),
+            INDEX idx_business_type (business_type)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
     );
+
+    // 为已存在的表添加 business_type 字段
+    if (!db_column_exists($pdo, 'import_jobs', 'business_type')) {
+        $safeExec("ALTER TABLE import_jobs ADD COLUMN business_type ENUM('receipt','payment') DEFAULT NULL AFTER created_by");
+        $safeExec("ALTER TABLE import_jobs ADD INDEX idx_business_type (business_type)");
+    }
 
     $safeExec(
         "CREATE TABLE IF NOT EXISTS import_files (

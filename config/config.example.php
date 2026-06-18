@@ -12,7 +12,7 @@ return [
         'charset' => 'utf8mb4',
     ],
     'app' => [
-        'name' => '云云合同管理系统',
+        'name' => '智链经营',
         'timezone' => 'Asia/Shanghai',
         'base_path' => '/mf',
     ],

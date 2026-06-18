@@ -23,19 +23,41 @@ class ImportController
     public function index(): void
     {
         global $pageTitle, $activeNav;
-        $pageTitle = '批量导入';
-        $activeNav = 'import';
+
+        // 获取业务类型参数
+        $biz = (string) ($_GET['biz'] ?? '');
+        if (!in_array($biz, ['receipt', 'payment'], true)) {
+            $biz = '';
+        }
+
+        // 根据业务类型设置页面信息
+        $bizNames = [
+            'receipt' => '收款合同',
+            'payment' => '付款合同',
+            '' => '合同'
+        ];
+        $bizName = $bizNames[$biz] ?? '合同';
+
+        $pageTitle = $biz ? $bizName . '批量导入' : '批量导入';
+        $activeNav = $biz ?: 'import';
 
         // 检查是否有通知消息
         $notification = $_SESSION['import_notification'] ?? null;
         unset($_SESSION['import_notification']);
-        $pendingCount = $this->getPendingReviewCount();
+        $pendingCount = $this->getPendingReviewCount($biz);
 
         ob_start();
         ?>
         <div class="mf-panel">
             <div class="mf-panel__header">
-                <h3>合同批量导入</h3>
+                <h3><?= e($bizName) ?>批量导入</h3>
+                <?php if ($biz): ?>
+                <div class="mf-panel__actions">
+                    <a href="<?= e(url('orders.php?biz=' . $biz)) ?>" class="mf-btn mf-btn--default">
+                        <i class="bi bi-arrow-left"></i> 返回<?= e($bizName) ?>列表
+                    </a>
+                </div>
+                <?php endif; ?>
             </div>
             <div class="mf-panel__body">
                 <?php if ($notification): ?>
@@ -53,11 +75,14 @@ class ImportController
                 <?php unset($_SESSION['error']); endif; ?>
 
                 <!-- 文件上传区域 -->
-                <form id="uploadForm" method="post" action="<?= url('import/process.php') ?>" enctype="multipart/form-data">
+                <form id="uploadForm" method="post" action="<?= url('import/process-files.php') ?>" enctype="multipart/form-data">
                     <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                    <?php if ($biz): ?>
+                    <input type="hidden" name="biz" value="<?= e($biz) ?>">
+                    <?php endif; ?>
 
                     <div class="mf-form-item">
-                        <label class="mf-label">选择合同文件</label>
+                        <label class="mf-label">选择<?= e($bizName) ?>文件</label>
                         <div id="dropZone" style="
                             border: 2px dashed #dcdfe6;
                             border-radius: 8px;
@@ -92,8 +117,8 @@ class ImportController
                             <i class="bi bi-upload"></i> 开始导入
                         </button>
 
-                        <a href="<?= url('import/review.php') ?>" class="mf-btn mf-btn--warning">
-                            查看待审核合同 <?php if ($pendingCount > 0): ?> (<?= $pendingCount ?>) <?php endif; ?>
+                        <a href="<?= url('import/review.php' . ($biz ? '?biz=' . $biz : '')) ?>" class="mf-btn mf-btn--warning">
+                            查看待审核<?= e($bizName) ?> <?php if ($pendingCount > 0): ?> (<?= $pendingCount ?>) <?php endif; ?>
                         </a>
                     </div>
                 </form>
@@ -103,11 +128,17 @@ class ImportController
                     <div class="mf-panel__body">
                         <ul style="margin:0;padding-left:1.5em;line-height:2;">
                             <li>支持 Word、PDF、图片等多种格式</li>
-                            <li>系统将自动识别合同文本并提取关键字段</li>
+                            <li>系统将自动识别<?= e($bizName) ?>文本并提取关键字段</li>
+                            <?php if ($biz === 'receipt'): ?>
+                            <li>重点识别：<strong>客户名称、联系电话</strong>、合同编号、金额、签订日期等</li>
+                            <?php elseif ($biz === 'payment'): ?>
+                            <li>重点识别：<strong>供应商名称、项目名称、付款事由</strong>、合同编号、金额、签订日期等</li>
+                            <?php else: ?>
                             <li>使用 SiliconFlow OCR 识别图片和扫描版 PDF</li>
                             <li>使用 DeepSeek 大模型进行语义校验</li>
-                            <li>低置信度合同将标记为待审核状态</li>
-                            <li>原始文件将保存为合同附件</li>
+                            <?php endif; ?>
+                            <li>低置信度<?= e($bizName) ?>将标记为待审核状态</li>
+                            <li>原始文件将保存为<?= e($bizName) ?>附件</li>
                         </ul>
                     </div>
                 </div>
@@ -339,6 +370,12 @@ class ImportController
                 var formData = new FormData();
                 formData.append('csrf', document.querySelector('input[name="csrf"]').value);
 
+                // 添加业务类型参数
+                var bizInput = document.querySelector('input[name="biz"]');
+                if (bizInput) {
+                    formData.append('biz', bizInput.value);
+                }
+
                 for (var i = 0; i < selectedFiles.length; i++) {
                     formData.append('files[]', selectedFiles[i]);
                 }
@@ -401,8 +438,10 @@ class ImportController
                                 document.getElementById('uploadStatus').innerHTML = '<span style="color:#28a745;"><i class="bi bi-check-circle"></i> 导入完成！</span>';
                                 document.getElementById('uploadProgressBar').style.width = '100%';
                                 document.getElementById('uploadProgressBar').style.background = '#28a745';
+                                var bizParam = bizInput ? bizInput.value : '';
+                                var reviewUrl = '<?= url('import/review.php') ?>' + (bizParam ? '?biz=' + bizParam : '');
                                 setTimeout(function() {
-                                    window.location.href = '<?= url('import/review.php') ?>';
+                                    window.location.href = reviewUrl;
                                 }, 1000);
                             }
                         } catch (ex) {
@@ -726,25 +765,39 @@ class ImportController
     public function reviewList(): void
     {
         global $pageTitle, $activeNav;
-        $pageTitle = '待审核合同';
-        $activeNav = 'import';
+
+        // 获取业务类型参数
+        $biz = (string) ($_GET['biz'] ?? '');
+        if (!in_array($biz, ['receipt', 'payment'], true)) {
+            $biz = '';
+        }
+
+        $bizNames = [
+            'receipt' => '收款合同',
+            'payment' => '付款合同',
+            '' => '合同'
+        ];
+        $bizName = $bizNames[$biz] ?? '合同';
+
+        $pageTitle = '待审核' . $bizName;
+        $activeNav = $biz ?: 'import';
 
         require_permission('import.review');
 
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = 20;
 
-        $contracts = $this->getPendingContracts($page, $perPage);
-        $total = $this->getPendingContractsCount();
+        $contracts = $this->getPendingContracts($page, $perPage, $biz);
+        $total = $this->getPendingContractsCount($biz);
         $totalPages = ceil($total / $perPage);
 
         ob_start();
         ?>
         <div class="mf-panel">
             <div class="mf-panel__header">
-                <h3>📥 待审核合同列表</h3>
+                <h3>📥 待审核<?= e($bizName) ?>列表</h3>
                 <div class="mf-panel__actions">
-                    <a href="<?= url('import.php') ?>" class="mf-btn mf-btn--default">
+                    <a href="<?= url('import.php' . ($biz ? '?biz=' . $biz : '')) ?>" class="mf-btn mf-btn--default">
                         <i class="bi bi-arrow-left"></i> 返回导入
                     </a>
                 </div>
@@ -752,8 +805,8 @@ class ImportController
 
             <!-- 页面说明 -->
             <div style="background:#fff3cd;padding:12px 16px;border-bottom:1px solid #ffeeba;">
-                <strong>📋 页面说明：</strong>此处显示通过批量导入识别的合同，由于置信度较低（&lt;85%），需要人工审核确认。
-                <br><small style="color:#856404;">请核对合同信息，确认无误后点击"审核通过"，或修改信息后保存。</small>
+                <strong>📋 页面说明：</strong>此处显示通过批量导入识别的<?= e($bizName) ?>，由于置信度较低（&lt;85%），需要人工审核确认。
+                <br><small style="color:#856404;">请核对<?= e($bizName) ?>信息，确认无误后点击"审核通过"，或修改信息后保存。</small>
             </div>
 
             <div class="mf-panel__body">
@@ -801,6 +854,9 @@ class ImportController
                 </div>
 
                 <form id="batchForm" method="post" action="<?= url('import/batch-approve.php') ?>">
+                    <?php if ($biz): ?>
+                    <input type="hidden" name="biz" value="<?= e($biz) ?>">
+                    <?php endif; ?>
                     <div class="mf-table-wrap">
                         <table class="mf-table" style="width:100%;">
                             <thead>
@@ -856,7 +912,7 @@ class ImportController
                                         <?= e($c['created_at'] ?? '-') ?>
                                     </td>
                                     <td>
-                                        <a href="<?= url('import/review/detail.php?id=' . $c['id']) ?>"
+                                        <a href="<?= url('import/review/detail.php?id=' . $c['id'] . ($biz ? '&biz=' . $biz : '')) ?>"
                                            class="mf-btn mf-btn--sm mf-btn--primary"
                                            title="查看详情并审核">
                                             <i class="bi bi-eye"></i> 审核
@@ -947,6 +1003,13 @@ class ImportController
             redirect('/import/review.php');
         }
 
+        // 获取业务类型（从合同 payment_type 或 URL 参数）
+        $biz = (string) ($_GET['biz'] ?? '');
+        if (!in_array($biz, ['receipt', 'payment'], true)) {
+            $biz = $contract['payment_type'] ?? '';
+        }
+        $bizQuery = $biz ? '?biz=' . $biz : '';
+
         // 获取识别字段及其置信度
         $fields = json_decode($contract['import_fields'] ?? '', true) ?? [];
         $ocrText = $contract['ocr_raw_text'] ?? '';
@@ -963,7 +1026,7 @@ class ImportController
             <div class="mf-panel__header">
                 <h3>合同审核详情</h3>
                 <div class="mf-panel__actions">
-                    <a href="<?= url('import/review.php') ?>" class="mf-btn mf-btn--default">
+                    <a href="<?= url('import/review.php' . $bizQuery) ?>" class="mf-btn mf-btn--default">
                         <i class="bi bi-arrow-left"></i> 返回列表
                     </a>
                 </div>
@@ -975,6 +1038,9 @@ class ImportController
                         <form id="editForm" method="post" action="<?= url('import/update.do.php') ?>">
                             <input type="hidden" name="id" value="<?= $id ?>">
                             <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                            <?php if ($biz): ?>
+                            <input type="hidden" name="biz" value="<?= e($biz) ?>">
+                            <?php endif; ?>
 
                             <div class="mf-form-item">
                                 <label class="mf-label">合同编号</label>
@@ -1138,11 +1204,14 @@ class ImportController
     {
         require_permission('import.review.edit');
 
+        $biz = (string) ($_GET['biz'] ?? '');
+        $bizQuery = $biz && in_array($biz, ['receipt', 'payment'], true) ? '?biz=' . $biz : '';
+
         $stmt = db()->prepare("UPDATE contracts SET status = 'ongoing' WHERE id = ? AND status = 'pending_review'");
         $stmt->execute([$id]);
 
         $_SESSION['success'] = '合同已审核通过';
-        redirect('/import/review.php');
+        redirect('/import/review.php' . $bizQuery);
     }
 
     /**
@@ -1153,14 +1222,17 @@ class ImportController
         require_permission('import.review.edit');
 
         $id = (int) ($_POST['id'] ?? 0);
+        $biz = (string) ($_POST['biz'] ?? '');
+        $bizQuery = $biz && in_array($biz, ['receipt', 'payment'], true) ? '?biz=' . $biz : '';
+
         if ($id <= 0) {
             $_SESSION['error'] = '无效的合同ID';
-            redirect('/import/review.php');
+            redirect('/import/review.php' . $bizQuery);
         }
 
         if (!csrf_verify($_POST['csrf'] ?? '')) {
             $_SESSION['error'] = '会话已过期';
-            redirect('/import/review/detail.php?id=' . $id);
+            redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
         }
 
         $stmt = db()->prepare(
@@ -1188,7 +1260,7 @@ class ImportController
         ]);
 
         $_SESSION['success'] = '合同信息已更新';
-        redirect('/import/review/detail.php?id=' . $id);
+        redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
     }
 
     /**
@@ -1199,14 +1271,17 @@ class ImportController
         require_permission('import.review.edit');
 
         $id = (int) ($_POST['id'] ?? 0);
+        $biz = (string) ($_POST['biz'] ?? '');
+        $bizQuery = $biz && in_array($biz, ['receipt', 'payment'], true) ? '?biz=' . $biz : '';
+
         if ($id <= 0) {
             $_SESSION['error'] = '无效的合同ID';
-            redirect('/import/review.php');
+            redirect('/import/review.php' . $bizQuery);
         }
 
         if (!csrf_verify($_POST['csrf'] ?? '')) {
             $_SESSION['error'] = '会话已过期';
-            redirect('/import/review/detail.php?id=' . $id);
+            redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
         }
 
         // 先更新
@@ -1235,7 +1310,7 @@ class ImportController
         ]);
 
         $_SESSION['success'] = '合同已更新并审核通过';
-        redirect('/import/review.php');
+        redirect('/import/review.php' . $bizQuery);
     }
 
     /**
@@ -1245,11 +1320,14 @@ class ImportController
     {
         require_permission('import.review.edit');
 
+        $biz = (string) ($_GET['biz'] ?? '');
+        $bizQuery = $biz && in_array($biz, ['receipt', 'payment'], true) ? '?biz=' . $biz : '';
+
         // 删除合同及其附件
         $this->deleteContract($id);
 
         $_SESSION['success'] = '合同已驳回';
-        redirect('/import/review.php');
+        redirect('/import/review.php' . $bizQuery);
     }
 
     /**
@@ -1260,6 +1338,8 @@ class ImportController
         require_permission('import.review.edit');
 
         $ids = $_POST['ids'] ?? [];
+        $biz = (string) ($_POST['biz'] ?? '');
+        $bizQuery = $biz && in_array($biz, ['receipt', 'payment'], true) ? '?biz=' . $biz : '';
 
         if (!empty($ids)) {
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
@@ -1268,7 +1348,7 @@ class ImportController
         }
 
         $_SESSION['success'] = '已批量通过 ' . count($ids) . ' 个合同';
-        redirect('/import/review.php');
+        redirect('/import/review.php' . $bizQuery);
     }
 
     /**
@@ -1279,6 +1359,8 @@ class ImportController
         require_permission('import.review.edit');
 
         $ids = $_POST['ids'] ?? [];
+        $biz = (string) ($_POST['biz'] ?? '');
+        $bizQuery = $biz && in_array($biz, ['receipt', 'payment'], true) ? '?biz=' . $biz : '';
 
         if (!empty($ids)) {
             foreach ($ids as $id) {
@@ -1287,38 +1369,57 @@ class ImportController
         }
 
         $_SESSION['success'] = '已批量驳回 ' . count($ids) . ' 个合同';
-        redirect('/import/review.php');
+        redirect('/import/review.php' . $bizQuery);
     }
 
     // ========== 私有方法 ==========
 
-    private function getPendingContracts(int $page, int $perPage): array
+    private function getPendingContracts(int $page, int $perPage, ?string $biz = null): array
     {
         $offset = ($page - 1) * $perPage;
 
-        $stmt = db()->prepare(
-            "SELECT c.*, u.display_name as created_by_name,
-                    ct.name as type_name
-             FROM contracts c
-             LEFT JOIN admins u ON c.created_by = u.id
-             LEFT JOIN contract_types ct ON c.type_id = ct.id
-             WHERE c.status = 'pending_review'
-             ORDER BY c.id DESC
-             LIMIT ? OFFSET ?"
-        );
-        $stmt->execute([$perPage, $offset]);
+        if ($biz && in_array($biz, ['receipt', 'payment'], true)) {
+            $stmt = db()->prepare(
+                "SELECT c.*, u.display_name as created_by_name,
+                        ct.name as type_name
+                 FROM contracts c
+                 LEFT JOIN admins u ON c.created_by = u.id
+                 LEFT JOIN contract_types ct ON c.type_id = ct.id
+                 WHERE c.status = 'pending_review' AND c.payment_type = ?
+                 ORDER BY c.id DESC
+                 LIMIT ? OFFSET ?"
+            );
+            $stmt->execute([$biz, $perPage, $offset]);
+        } else {
+            $stmt = db()->prepare(
+                "SELECT c.*, u.display_name as created_by_name,
+                        ct.name as type_name
+                 FROM contracts c
+                 LEFT JOIN admins u ON c.created_by = u.id
+                 LEFT JOIN contract_types ct ON c.type_id = ct.id
+                 WHERE c.status = 'pending_review'
+                 ORDER BY c.id DESC
+                 LIMIT ? OFFSET ?"
+            );
+            $stmt->execute([$perPage, $offset]);
+        }
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    private function getPendingContractsCount(): int
+    private function getPendingContractsCount(?string $biz = null): int
     {
-        $stmt = db()->query("SELECT COUNT(*) FROM contracts WHERE status = 'pending_review'");
+        if ($biz && in_array($biz, ['receipt', 'payment'], true)) {
+            $stmt = db()->prepare("SELECT COUNT(*) FROM contracts WHERE status = 'pending_review' AND payment_type = ?");
+            $stmt->execute([$biz]);
+        } else {
+            $stmt = db()->query("SELECT COUNT(*) FROM contracts WHERE status = 'pending_review'");
+        }
         return (int) $stmt->fetchColumn();
     }
 
-    private function getPendingReviewCount(): int
+    private function getPendingReviewCount(?string $biz = null): int
     {
-        return $this->getPendingContractsCount();
+        return $this->getPendingContractsCount($biz);
     }
 
     private function getApprovedCount(): int

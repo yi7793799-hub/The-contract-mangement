@@ -22,7 +22,7 @@ if (!$row) {
 }
 
 $cfg = app_config();
-$defaultName = (string) ($cfg['app']['name'] ?? '合同管理系统');
+$defaultName = (string) ($cfg['app']['name'] ?? '智链经营');
 $error = '';
 $ok = '';
 $uploadDir = __DIR__ . '/uploads/branding';

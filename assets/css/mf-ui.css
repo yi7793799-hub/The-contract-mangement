@@ -40,9 +40,6 @@ img {
 .mf-inline-flex {
   display: inline-flex;
 }
-.mf-inline-flex {
-  display: inline-flex;
-}
 .mf-flex-wrap {
   flex-wrap: wrap;
 }
@@ -228,20 +225,26 @@ img {
 .mf-select,
 .mf-textarea {
   width: 100%;
-  height: 32px;
-  padding: 0 10px;
+  height: 36px;
+  padding: 0 12px;
   font-size: 13px;
   color: #606266;
   background: #fff;
   border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  border-radius: 8px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.mf-input:hover,
+.mf-select:hover,
+.mf-textarea:hover {
+  border-color: #c0c4cc;
 }
 .mf-input:focus,
 .mf-select:focus,
 .mf-textarea:focus {
   border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
 }
 .mf-input:disabled,
 .mf-input[readonly] {
@@ -255,9 +258,10 @@ img {
 }
 .mf-textarea {
   height: auto;
-  min-height: 64px;
-  padding: 8px 10px;
+  min-height: 72px;
+  padding: 10px 12px;
   resize: vertical;
+  border-radius: 8px;
 }
 
 .mf-check {
@@ -269,13 +273,15 @@ img {
   color: #606266;
 }
 .mf-check input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
+  accent-color: #4caf50;
 }
 .mf-input--sm {
-  height: 28px;
+  height: 30px;
   font-size: 12px;
-  padding: 0 8px;
+  padding: 0 10px;
+  border-radius: 6px;
 }
 
 .mf-form-item {
@@ -295,10 +301,10 @@ img {
 }
 .mf-input-group .mf-input {
   flex: 1;
-  border-radius: 4px 0 0 4px;
+  border-radius: 8px 0 0 8px;
 }
 .mf-input-group .mf-btn {
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 8px 8px 0;
   flex-shrink: 0;
 }
 
@@ -307,19 +313,44 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
-  padding: 0 14px;
+  height: 36px;
+  padding: 0 16px;
   font-size: 13px;
   line-height: 1;
   border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  border-radius: 8px;
   background: #fff;
   color: #606266;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
+
+/* 按钮点击波纹效果 */
+.mf-btn::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: radial-gradient(circle, rgba(76, 175, 80, 0.3) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.8s;
+}
+
+.mf-btn:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
 .mf-btn:hover {
   color: #4caf50;
   border-color: #c8e6c9;
@@ -334,6 +365,9 @@ img {
   border-color: #4caf50;
   color: #fff;
 }
+.mf-btn--primary::after {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+}
 .mf-btn--primary:hover {
   background: #43a047;
   border-color: #43a047;
@@ -344,6 +378,9 @@ img {
   border-color: #ff9800;
   color: #fff;
 }
+.mf-btn--orange::after {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+}
 .mf-btn--orange:hover {
   background: #f57c00;
   border-color: #f57c00;
@@ -353,6 +390,9 @@ img {
   color: #f56c6c;
   border-color: #fbc4c4;
   background: #fff;
+}
+.mf-btn--danger::after {
+  background: radial-gradient(circle, rgba(245, 108, 108, 0.3) 10%, transparent 10.01%);
 }
 .mf-btn--danger:hover {
   background: #fef0f0;
@@ -369,16 +409,19 @@ img {
   color: #409eff;
   height: auto;
   padding: 4px 8px;
+  border-radius: 6px;
 }
 .mf-btn--lg {
-  height: 40px;
-  padding: 0 20px;
+  height: 44px;
+  padding: 0 24px;
   font-size: 14px;
+  border-radius: 10px;
 }
 .mf-btn--sm {
-  height: 28px;
-  padding: 0 10px;
+  height: 30px;
+  padding: 0 12px;
   font-size: 12px;
+  border-radius: 6px;
 }
 .mf-btn--block {
   width: 100%;

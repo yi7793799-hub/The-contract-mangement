@@ -58,18 +58,107 @@ try {
 <header class="mf-topbar">
     <div class="mf-topbar-inner mf-flex mf-items-center mf-justify-between mf-p-2">
         <div class="mf-flex mf-items-center mf-gap-2">
-            <?php if (!empty($mfBrand['logo_url'])): ?>
-                <span class="mf-logo mf-logo--custom" aria-hidden="true"><img src="<?= e($mfBrand['logo_url']) ?>" alt=""></span>
-            <?php else: ?>
-                <span class="mf-logo mf-logo-yin"><i class="bi bi-file-earmark-text"></i></span>
-            <?php endif; ?>
+            <span class="mf-panda-logo" aria-hidden="true">
+                <svg viewBox="0 0 100 100" width="42" height="42">
+                    <!-- 耳朵 -->
+                    <ellipse cx="22" cy="18" rx="12" ry="14" fill="#2d2d2d">
+                        <animate attributeName="ry" values="14;12;14" dur="0.4s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse cx="78" cy="18" rx="12" ry="14" fill="#2d2d2d">
+                        <animate attributeName="ry" values="12;14;12" dur="0.4s" repeatCount="indefinite"/>
+                    </ellipse>
+
+                    <!-- 头部 -->
+                    <ellipse cx="50" cy="42" rx="35" ry="32" fill="#fff">
+                        <animate attributeName="ry" values="32;30;32" dur="0.8s" repeatCount="indefinite"/>
+                    </ellipse>
+
+                    <!-- 眼圈 -->
+                    <ellipse cx="35" cy="40" rx="12" ry="14" fill="#2d2d2d"/>
+                    <ellipse cx="65" cy="40" rx="12" ry="14" fill="#2d2d2d"/>
+
+                    <!-- 眼睛 - 眨眼动画 -->
+                    <ellipse cx="35" cy="40" rx="6" ry="7" fill="#fff">
+                        <animate attributeName="ry" values="7;1;7" dur="2.5s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse cx="65" cy="40" rx="6" ry="7" fill="#fff">
+                        <animate attributeName="ry" values="7;1;7" dur="2.5s" repeatCount="indefinite"/>
+                    </ellipse>
+
+                    <!-- 眼珠 - 左右看 -->
+                    <circle cx="37" cy="41" r="3" fill="#1a1a1a">
+                        <animate attributeName="cx" values="37;33;37" dur="1.5s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="67" cy="41" r="3" fill="#1a1a1a">
+                        <animate attributeName="cx" values="67;63;67" dur="1.5s" repeatCount="indefinite"/>
+                    </circle>
+
+                    <!-- 鼻子 -->
+                    <ellipse cx="50" cy="52" rx="5" ry="4" fill="#2d2d2d">
+                        <animate attributeName="ry" values="4;3;4" dur="0.6s" repeatCount="indefinite"/>
+                    </ellipse>
+
+                    <!-- 嘴巴 - 微笑动画 -->
+                    <path d="M 42 58 Q 50 66 58 58" stroke="#2d2d2d" stroke-width="2.5" fill="none" stroke-linecap="round">
+                        <animate attributeName="d" values="M 42 58 Q 50 66 58 58;M 42 56 Q 50 68 58 56;M 42 58 Q 50 66 58 58" dur="0.8s" repeatCount="indefinite"/>
+                    </path>
+
+                    <!-- 腮红 -->
+                    <circle cx="22" cy="50" r="6" fill="#ffb3ba" opacity="0.7">
+                        <animate attributeName="r" values="6;7;6" dur="0.8s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="78" cy="50" r="6" fill="#ffb3ba" opacity="0.7">
+                        <animate attributeName="r" values="6;7;6" dur="0.8s" repeatCount="indefinite"/>
+                    </circle>
+
+                    <!-- 身体 -->
+                    <ellipse cx="50" cy="78" rx="22" ry="18" fill="#fff">
+                        <animate attributeName="cy" values="78;76;78" dur="0.4s" repeatCount="indefinite"/>
+                    </ellipse>
+
+                    <!-- 左手 - 挥手动画 -->
+                    <ellipse cx="25" cy="72" rx="10" ry="14" fill="#2d2d2d">
+                        <animate attributeName="cy" values="72;62;72" dur="0.4s" repeatCount="indefinite"/>
+                        <animate attributeName="cx" values="25;20;25" dur="0.4s" repeatCount="indefinite"/>
+                        <animateTransform attributeName="transform" type="rotate" values="-10 25 72;20 25 72;-10 25 72" dur="0.4s" repeatCount="indefinite"/>
+                    </ellipse>
+
+                    <!-- 右手 - 挥手动画 -->
+                    <ellipse cx="75" cy="72" rx="10" ry="14" fill="#2d2d2d">
+                        <animate attributeName="cy" values="62;72;62" dur="0.4s" repeatCount="indefinite"/>
+                        <animate attributeName="cx" values="80;75;80" dur="0.4s" repeatCount="indefinite"/>
+                        <animateTransform attributeName="transform" type="rotate" values="20 75 72;-10 75 72;20 75 72" dur="0.4s" repeatCount="indefinite"/>
+                    </ellipse>
+
+                    <!-- 左脚 -->
+                    <ellipse cx="38" cy="94" rx="10" ry="6" fill="#2d2d2d">
+                        <animate attributeName="cx" values="38;35;38" dur="0.4s" repeatCount="indefinite"/>
+                    </ellipse>
+
+                    <!-- 右脚 -->
+                    <ellipse cx="62" cy="94" rx="10" ry="6" fill="#2d2d2d">
+                        <animate attributeName="cx" values="62;65;62" dur="0.4s" repeatCount="indefinite"/>
+                    </ellipse>
+
+                    <!-- 头顶小花 -->
+                    <circle cx="50" cy="8" r="4" fill="#ff6b9d">
+                        <animate attributeName="r" values="4;5;4" dur="0.6s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="46" cy="6" r="3" fill="#ffb3d1">
+                        <animate attributeName="r" values="3;4;3" dur="0.6s" repeatCount="indefinite" begin="0.1s"/>
+                    </circle>
+                    <circle cx="54" cy="6" r="3" fill="#ffb3d1">
+                        <animate attributeName="r" values="3;4;3" dur="0.6s" repeatCount="indefinite" begin="0.1s"/>
+                    </circle>
+                </svg>
+            </span>
             <span class="mf-brand-title" style="color:#fff;font-weight:600;"><?= e($appName) ?></span>
         </div>
         <div class="mf-flex mf-items-center mf-gap-1 mf-topbar-actions">
             <div class="mf-dropdown">
                 <a href="#" class="mf-dropdown__trigger mf-topbar-item mf-flex mf-flex-wrap mf-items-center" style="color:#fff;flex-direction:column;" data-mf-dropdown-toggle>
                     <i class="bi bi-person-circle" style="font-size:1.5rem;"></i>
-                    <span class="mf-topbar-label"><?= e($admin['display_name'] ?? $admin['username'] ?? '超级管理员') ?></span>
+                    <span class="mf-topbar-label">用户</span>
                 </a>
                 <div class="mf-dropdown__menu mf-dropdown__menu--right">
                     <a class="mf-dropdown__item" href="<?= e(url('app_settings.php')) ?>"><i class="bi bi-sliders"></i> 系统设置</a>
@@ -113,24 +202,11 @@ try {
             <?php if (admin_can('import.view')): ?><a class="mf-nav-link <?= $activeNav === 'import' ? 'active' : '' ?>" href="<?= e(url('import.php')) ?>"><i class="fa-solid fa-file-import mf-nav-fa mf-nav-fa--orders" aria-hidden="true"></i><span>批量导入</span></a><?php endif; ?>
             <?php if (admin_can('types.view')): ?><a class="mf-nav-link <?= $activeNav === 'types' ? 'active' : '' ?>" href="<?= e(url('settings.php')) ?>"><i class="fa-solid fa-layer-group mf-nav-fa mf-nav-fa--members" aria-hidden="true"></i><span>类型管理</span></a><?php endif; ?>
             <?php if (admin_can('remind.view')): ?><a class="mf-nav-link <?= $activeNav === 'report' ? 'active' : '' ?>" href="<?= e(url('report.php')) ?>"><i class="fa-solid fa-bell mf-nav-fa mf-nav-fa--report" aria-hidden="true"></i><span>到期提醒</span></a><?php endif; ?>
-            <?php endif; if (admin_can('app_settings.view')): ?><a class="mf-nav-link <?= $activeNav === 'app_settings' ? 'active' : '' ?>" href="<?= e(url('app_settings.php')) ?>"><i class="fa-solid fa-gear mf-nav-fa mf-nav-fa--system" aria-hidden="true"></i><span>系统设置</span></a><?php endif; ?>
+            <?php if (admin_can('app_settings.view')): ?><a class="mf-nav-link <?= $activeNav === 'app_settings' ? 'active' : '' ?>" href="<?= e(url('app_settings.php')) ?>"><i class="fa-solid fa-gear mf-nav-fa mf-nav-fa--system" aria-hidden="true"></i><span>系统设置</span></a><?php endif; ?>
         </nav>
     </aside>
-    <main class="mf-main mf-flex-grow mf-flex mf-flex-wrap" style="flex-direction:column;">
-        <div class="mf-tabstrip mf-tabstrip--main mf-flex mf-items-center mf-gap-1" style="padding:6px 12px;">
-            <div class="mf-tabstrip__scroll mf-flex mf-items-center mf-gap-1 mf-flex-grow">
-                <a class="mf-tab <?= $mfTabActive === 'dashboard' ? 'active' : '' ?>" href="<?= e(url('dashboard.php')) ?>">首页</a>
-                <a class="mf-tab <?= $mfTabActive === 'quick_search' ? 'active' : '' ?>" href="<?= e(url('quick_search.php')) ?>">快速搜索</a>
-                <a class="mf-tab <?= $receiptActive ? 'active' : '' ?>" href="<?= e(url('finance_progress.php?tab=receipt&biz=receipt')) ?>">收款业务</a>
-                <a class="mf-tab <?= $paymentActive ? 'active' : '' ?>" href="<?= e(url('finance_progress.php?tab=payment&biz=payment')) ?>">付款业务</a>
-                <a class="mf-tab <?= $mfTabActive === 'archived_contracts' ? 'active' : '' ?>" href="<?= e(url('archived_contracts.php')) ?>">归档合同</a>
-                <a class="mf-tab <?= $mfTabActive === 'import' ? 'active' : '' ?>" href="<?= e(url('import.php')) ?>">批量导入</a>
-                <a class="mf-tab <?= $mfTabActive === 'types' ? 'active' : '' ?>" href="<?= e(url('settings.php')) ?>">类型管理</a>
-                <a class="mf-tab <?= $mfTabActive === 'report' ? 'active' : '' ?>" href="<?= e(url('report.php')) ?>">到期提醒</a>
-                <a class="mf-tab <?= $mfTabActive === 'app_settings' ? 'active' : '' ?>" href="<?= e(url('app_settings.php')) ?>">系统设置</a>
-            </div>
-        </div>
-        <div class="mf-content mf-flex-grow <?= e($contentClass) ?>" style="padding:12px 16px 24px;">
+    <main class="mf-main mf-flex-grow">
+        <div class="mf-content mf-flex-grow <?= e($contentClass) ?>">
             <?= $content ?>
         </div>
     </main>

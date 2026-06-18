@@ -11,7 +11,7 @@ return array (
   ),
   'app' =>
   array (
-    'name' => '合同管理系统',
+    'name' => '智链经营',
     'timezone' => 'Asia/Shanghai',
     'base_path' => '/',
   ),

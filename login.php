@@ -64,12 +64,16 @@ $appName = $mfBrand['name'] !== '' ? $mfBrand['name'] : '管理后台';
                         <div class="mf-login-cloud__input-wrap">
                             <i class="bi bi-person" aria-hidden="true"></i>
                             <input type="text" name="username" id="mf-login-user" class="mf-login-cloud__input" required autofocus placeholder="用户名" autocomplete="username">
+                            <span class="mf-login-cloud__input-placeholder" aria-hidden="true"></span>
                         </div>
                     </div>
                     <div class="mf-login-cloud__field">
                         <div class="mf-login-cloud__input-wrap">
                             <i class="bi bi-lock" aria-hidden="true"></i>
                             <input type="password" name="password" id="mf-login-pass" class="mf-login-cloud__input" required placeholder="密码" autocomplete="current-password">
+                            <button type="button" class="mf-login-cloud__toggle-password" id="mf-toggle-password" aria-label="显示密码" title="显示密码">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="mf-login-cloud__remember-row">
@@ -85,8 +89,8 @@ $appName = $mfBrand['name'] !== '' ? $mfBrand['name'] : '管理后台';
     </div>
 
     <footer class="mf-login-cloud__footer">
-        <p class="mf-login-cloud__slogan">一个系统 · 高效经营 · 轻松管理</p>
-        <p class="mf-login-cloud__copy">© <?= date('Y') ?> <?= e($appName) ?></p>
+        <p class="mf-login-cloud__slogan">运筹从容 · 经营有道</p>
+        <p class="mf-login-cloud__copy">智链经营</p>
     </footer>
 </div>
 <script src="<?= e(asset_url('js/mf-ui.js')) ?>"></script>
@@ -100,6 +104,7 @@ $appName = $mfBrand['name'] !== '' ? $mfBrand['name'] : '管理后台';
     var user = document.getElementById('mf-login-user');
     var pass = document.getElementById('mf-login-pass');
     var remember = document.getElementById('mf-login-remember');
+    var toggleBtn = document.getElementById('mf-toggle-password');
     try {
       if (localStorage.getItem(LS_KEY) === '1') {
         remember.checked = true;
@@ -122,6 +127,25 @@ $appName = $mfBrand['name'] !== '' ? $mfBrand['name'] : '管理后台';
             localStorage.removeItem(LS_PASS);
           }
         } catch (e) {}
+      });
+    }
+    // 密码显示/隐藏切换
+    if (toggleBtn && pass) {
+      toggleBtn.addEventListener('click', function () {
+        var icon = toggleBtn.querySelector('i');
+        if (pass.type === 'password') {
+          pass.type = 'text';
+          icon.classList.remove('bi-eye');
+          icon.classList.add('bi-eye-slash');
+          toggleBtn.setAttribute('aria-label', '隐藏密码');
+          toggleBtn.setAttribute('title', '隐藏密码');
+        } else {
+          pass.type = 'password';
+          icon.classList.remove('bi-eye-slash');
+          icon.classList.add('bi-eye');
+          toggleBtn.setAttribute('aria-label', '显示密码');
+          toggleBtn.setAttribute('title', '显示密码');
+        }
       });
     }
   <?php if ($error !== ''): ?>

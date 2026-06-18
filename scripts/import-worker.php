@@ -284,6 +284,10 @@ function createContract(PDO $db, array $fields, string $ocrText, float $confiden
     $highThreshold = $config['high_confidence'] ?? 85;
     $status = $confidence >= $highThreshold ? 'ongoing' : 'pending_review';
 
+    // 获取业务类型作为默认 payment_type
+    $businessType = $config['business_type'] ?? '';
+    $defaultPaymentType = in_array($businessType, ['receipt', 'payment'], true) ? $businessType : 'receipt';
+
     // 处理合同编号
     $contractNo = trim($fields['contract_no'] ?? '');
     if (empty($contractNo)) {
@@ -316,7 +320,7 @@ function createContract(PDO $db, array $fields, string $ocrText, float $confiden
         $fields['effective_date'] ?? null,
         $fields['expiry_date'] ?? null,
         $status,
-        $fields['payment_type'] ?? 'receipt',
+        $fields['payment_type'] ?? $defaultPaymentType,
         $confidence,
         json_encode($fields['confidence'] ?? [], JSON_UNESCAPED_UNICODE),
         $ocrText,
@@ -411,6 +415,12 @@ if (!$job) {
     exit(1);
 }
 
+// 获取业务类型
+$businessType = $job['business_type'] ?? '';
+if (!in_array($businessType, ['receipt', 'payment'], true)) {
+    $businessType = '';
+}
+
 // 更新任务状态为处理中
 $stmt = $db->prepare("UPDATE import_jobs SET status = 'processing' WHERE id = ?");
 $stmt->execute([$jobId]);
@@ -419,6 +429,7 @@ $stmt->execute([$jobId]);
 $config = [
     'high_confidence' => 85,
     'low_confidence' => 60,
+    'business_type' => $businessType,
 ];
 
 // 获取待处理的文件

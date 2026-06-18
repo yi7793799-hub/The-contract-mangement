@@ -55,6 +55,12 @@ try {
         exit;
     }
 
+    // 获取业务类型参数
+    $biz = (string) ($_POST['biz'] ?? '');
+    if (!in_array($biz, ['receipt', 'payment'], true)) {
+        $biz = '';
+    }
+
     $files = $_FILES['files'] ?? [];
     $fileCount = isset($files['name']) && is_array($files['name']) ? count($files['name']) : 0;
 
@@ -109,9 +115,9 @@ try {
 
     // 创建数据库记录
     $stmt = db()->prepare(
-        "INSERT INTO import_jobs (folder_name, total_files, created_by, status) VALUES (?, ?, ?, 'pending')"
+        "INSERT INTO import_jobs (folder_name, total_files, created_by, status, business_type) VALUES (?, ?, ?, 'pending', ?)"
     );
-    $stmt->execute([basename($jobDir), count($uploadedFiles), $adminId]);
+    $stmt->execute([basename($jobDir), count($uploadedFiles), $adminId, $biz ?: null]);
     $jobId = (int) db()->lastInsertId();
 
     foreach ($uploadedFiles as $filePath) {
@@ -132,6 +138,7 @@ try {
         'created_at' => date('Y-m-d H:i:s'),
         'php_path' => 'E:/汇总/phpstudyV8/phpstudy_pro/Extensions/php/php7.3.4nts/php.exe',
         'worker_script' => dirname(__DIR__) . '/scripts/import-worker.php',
+        'business_type' => $biz,
     ]));
 
     // ========== 返回成功响应（不再启动 Worker，由前端触发）==========

@@ -1,3 +1,8 @@
+/**
+ * 智链经营 - 应用样式
+ * 原始绿色主题
+ */
+
 :root {
   --mf-green: #4caf50;
   --mf-green-dark: #43a047;
@@ -6,6 +11,55 @@
   --mf-sidebar-hover: #3d4654;
   --mf-bg: #f4f4f4;
   --mf-card-radius: 0;
+}
+
+/* ========== 跳舞熊猫动画 ========== */
+.mf-panda-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: panda-dance 0.8s ease-in-out infinite;
+}
+
+@keyframes panda-dance {
+  0%, 100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  25% {
+    transform: translateY(-4px) rotate(2deg);
+  }
+  50% {
+    transform: translateY(0) rotate(3deg);
+  }
+  75% {
+    transform: translateY(-3px) rotate(-2deg);
+  }
+}
+
+.mf-panda-logo svg {
+  width: 38px;
+  height: 38px;
+}
+
+/* 熊猫手臂摆动动画 */
+.mf-panda-logo .panda-arm-left {
+  animation: panda-arm-wave-left 0.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.mf-panda-logo .panda-arm-right {
+  animation: panda-arm-wave-right 0.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes panda-arm-wave-left {
+  0%, 100% { transform: rotate(-30 16 38); }
+  50% { transform: rotate(-50 16 38); }
+}
+
+@keyframes panda-arm-wave-right {
+  0%, 100% { transform: rotate(30 48 38); }
+  50% { transform: rotate(50 48 38); }
 }
 
 body.mf-app {
@@ -138,7 +192,7 @@ body.mf-app {
   display: block;
 }
 
-/* 顶栏 Logo：透明底，与绿色顶栏一体（登录页仍用上方默认底/描边） */
+/* 顶栏 Logo：透明底，与绿色顶栏一体 */
 body.mf-app .mf-topbar .mf-logo {
   background: transparent;
 }
@@ -234,7 +288,7 @@ body.mf-app .mf-dashboard-trend .mf-panel__body {
   flex-direction: column;
 }
 
-/* 侧栏菜单区：左右无内边距，项背景铺满栏宽 */
+/* 侧栏菜单区 */
 .mf-sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -281,7 +335,7 @@ body.mf-app .mf-dashboard-trend .mf-panel__body {
   text-align: center;
 }
 
-/* 侧栏 Font Awesome：略小众图标 + 默认彩色，激活项变白 */
+/* 侧栏 Font Awesome 图标彩色 */
 .mf-nav-link .mf-nav-fa {
   font-size: 1.05rem;
   width: 1.35rem;
@@ -314,46 +368,11 @@ body.mf-app .mf-dashboard-trend .mf-panel__body {
   background: var(--mf-bg);
 }
 
-/* 会员消费页：主列至少一屏高，便于工作区纵向铺满（不影响其它后台页） */
-.mf-shell > .mf-main:has(> .mf-content.mf-content--pos) {
-  min-height: calc(100vh - 50px);
+.mf-content {
+  padding: 12px 16px 24px;
 }
 
-/* 会员消费：顶栏下主区占满剩余视口，仅 .mf-content--pos 内纵向滚动（避免整页 flex 把收银台压扁 + .mf-panel overflow 裁切） */
-body.mf-app:has(.mf-content.mf-content--pos) {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  max-height: 100vh;
-  overflow: hidden;
-}
-body.mf-app:has(.mf-content.mf-content--pos) > .mf-topbar {
-  flex-shrink: 0;
-}
-body.mf-app:has(.mf-content.mf-content--pos) > .mf-shell {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  align-items: stretch;
-}
-body.mf-app:has(.mf-content.mf-content--pos) .mf-shell > .mf-main {
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-body.mf-app:has(.mf-content.mf-content--pos) .mf-main > .mf-tabstrip {
-  flex-shrink: 0;
-}
-body.mf-app:has(.mf-content.mf-content--pos) .mf-main > .mf-content.mf-content--pos {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* 列表筛选行：输入框与查询/重置/新增 底部对齐且同一行（避免子项 min-width 与 flex-wrap 换行） */
+/* 列表筛选行 */
 @media (min-width: 768px) {
   .mf-row.mf-toolbar-row {
     flex-wrap: nowrap;
@@ -383,1327 +402,14 @@ body.mf-app:has(.mf-content.mf-content--pos) .mf-main > .mf-content.mf-content--
   min-width: 8px;
 }
 
-.mf-tabstrip {
-  min-height: 40px;
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
-  padding-top: 6px;
-  padding-bottom: 6px;
-}
-.mf-tabstrip--main {
-  flex-wrap: nowrap;
-  min-width: 0;
-}
-.mf-tabstrip__scroll {
-  min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  flex-wrap: nowrap;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
-}
-.mf-tabstrip__scroll .mf-tab {
-  flex-shrink: 0;
-}
-
-.mf-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 4px 4px 0 0;
-  font-size: 13px;
-  color: #555;
-  text-decoration: none;
-  border: 1px solid transparent;
-  border-bottom: none;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-
-.mf-tab:hover {
-  background: #f5f5f5;
-  color: #333;
-}
-
-.mf-tab.active {
-  background: #eceff1;
-  color: #1b5e20;
-  font-weight: 600;
-  border-color: #e0e0e0;
-  border-bottom: 1px solid #eceff1;
-  margin-bottom: -1px;
-}
-
-.mf-tab-x {
-  font-size: 16px;
-  line-height: 1;
-  opacity: 0.5;
-  margin-left: 2px;
-}
-
-.mf-tab.active .mf-tab-x {
-  opacity: 0.7;
-}
-
-.table-mf thead th {
-  background: #f5f6f8;
-  font-weight: 600;
-  font-size: 13px;
-  white-space: nowrap;
-  border-bottom: 1px solid #e9ecef;
-}
-
-/* 收银购物车：无商品时占位（参考 ERP 居中灰字） */
-.mf-pos-page .mf-pos-cart-empty-row td {
-  padding: 0;
-  vertical-align: middle;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.mf-pos-page .mf-pos-cart-empty {
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #90a4ae;
-  font-size: 14px;
-  line-height: 1.65;
-  padding: 28px 16px 32px;
-  box-sizing: border-box;
-}
-
-.mf-pos-page .mf-pos-cart-empty__line1 {
-  font-size: 15px;
-  letter-spacing: 0.03em;
-}
-
-.mf-pos-page .mf-pos-cart-empty__line2 {
-  margin-top: 8px;
-  font-size: 13px;
-  color: #b0bec5;
-}
-
-/* 收银台主区内边距收紧（覆盖 layout 内联 padding）；允许纵向滚动 */
-.mf-main .mf-content.mf-content--pos {
-  padding: 4px 8px 14px !important;
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 0;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-body.mf-app:has(.mf-content.mf-content--pos) .mf-main > .mf-tabstrip.mf-tabstrip--main {
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-  padding-left: 10px !important;
-  padding-right: 10px !important;
-}
-
-/* 会员消费（无商品栏）：按内容增高，由 .mf-content--pos 滚动，避免内部 flex:1 把底部收银台挤扁 */
-.mf-pos-page--fill {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.mf-pos-page--fill .mf-pos-wrap {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.mf-pos-page--fill .mf-pos-left {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: none;
-}
-
-.mf-pos-page--fill .mf-pos-fill-area {
-  flex: 1 1 auto;
-  min-height: 160px;
-  margin-top: 8px;
-  border: 1px dashed #c5cae9;
-  background: linear-gradient(180deg, #fafbfd 0%, #eef2f6 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 28px 20px;
-  box-sizing: border-box;
-}
-
-.mf-pos-page--fill .mf-pos-fill-area__inner {
-  text-align: center;
-  max-width: 480px;
-}
-
-.mf-pos-page--fill .mf-pos-fill-area__title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #546e7a;
-  margin: 0 0 10px;
-}
-
-/* 会员消费：余额 / 次数 分段切换 */
-.mf-pos-seg {
-  display: inline-flex;
-  flex-wrap: wrap;
-  border: 1px solid #dcdfe6;
-  background: #fff;
-  margin-bottom: 8px;
-}
-.mf-pos-seg__btn {
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 14px;
-  padding: 0.45rem 1.1rem;
-  border: none;
-  background: #fff;
-  color: #606266;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-.mf-pos-seg__btn + .mf-pos-seg__btn {
-  border-left: 1px solid #ebeef5;
-}
-.mf-pos-seg__btn:hover {
-  background: #f5f7fa;
-  color: #303133;
-}
-.mf-pos-seg__btn.active {
-  background: var(--mf-green);
-  color: #fff;
-  font-weight: 600;
-}
-.mf-pos-seg__btn.active:hover {
-  background: var(--mf-green-dark);
-  color: #fff;
-}
-
-.mf-pos-mismatch-hint {
-  font-size: 13px;
-  color: #e65100;
-  margin-top: 6px;
-  line-height: 1.45;
-}
-
-/* 底部收银台：在双栏网格内纵向铺满，键盘行随剩余高度变高 */
-.mf-pos-page--fill .mf-pos-fill-area--checkout {
-  flex: 1 1 auto;
-  min-height: 0;
-  align-self: stretch;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  padding: 6px 6px 10px;
-  margin-top: 4px;
-  background: transparent;
-  border: none;
-}
-.mf-pos-fill-area--checkout > .mf-pos-inline-checkout {
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-.mf-pos-inline-checkout.mf-panel {
-  overflow: visible;
-}
-.mf-pos-inline-checkout {
-  width: 100%;
-  border: 1px solid #dcdfe6;
-  background: #fff;
-}
-/* 内联收银台：左栏信息 + 右栏支付方式与键盘（参考常见 POS） */
-.mf-pos-inline-checkout .mf-panel__header {
-  background: var(--mf-green);
-  color: #fff;
-  padding: 8px 12px;
-  border-bottom: none;
-}
-.mf-pos-inline-checkout .mf-panel__header .mf-fw-bold {
-  color: #fff;
-}
-.mf-pos-inline-checkout .mf-panel__body {
-  padding: 6px 8px 8px;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.mf-pos-inline-checkout .mf-checkout-mode-line {
-  margin-top: 2px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.92);
-  font-weight: 400;
-}
-/* 收银台内：仅支付方式 + 键盘 + 确认（消费金额等在左栏「消费信息」） */
-.mf-pos-inline-checkout__sheet {
-  display: grid;
-  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
-  gap: 10px 12px;
-  align-items: stretch;
-  width: 100%;
-  box-sizing: border-box;
-}
-.mf-pos-inline-checkout__sheet--tools-only {
-  grid-template-columns: 1fr;
-  gap: 0;
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-@media (max-width: 520px) {
-  .mf-pos-inline-checkout__sheet:not(.mf-pos-inline-checkout__sheet--tools-only) {
-    grid-template-columns: 1fr;
-  }
-}
-.mf-pos-inline-checkout__col--pay {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  flex: 1 1 auto;
-  background: #fff;
-  border: 1px solid #ebeef5;
-  padding: 10px 10px 12px;
-  box-sizing: border-box;
-}
-.mf-pos-inline-checkout__col--tools-only {
-  background: transparent;
-  border: none;
-  padding: 0;
-  min-height: 0;
-  flex: 1 1 auto;
-}
-.mf-pos-inline-checkout__pay-tools {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 0 0 auto;
-}
-.mf-pos-inline-checkout__keypad-wrap {
-  margin-top: 10px;
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-/* 左栏：消费信息（金额/备注/应收等） */
-.mf-pos-panel--checkout-form .mf-checkout-rows {
-  padding-top: 8px;
-}
-.mf-pos-panel--checkout-form .mf-checkout-duebar {
-  margin-top: 4px;
-  padding: 8px 0;
-}
-.mf-pos-panel--checkout-form .mf-checkout-payfield {
-  margin-top: 4px;
-}
-.mf-pos-panel--checkout-form .mf-checkout-payinput {
-  padding: 8px 10px;
-}
-.mf-pos-checkout-form-title {
-  margin-top: 0;
-  color: #606266;
-  letter-spacing: 0.02em;
-}
-.mf-pos-inline-checkout .mf-pay-tiles {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 0;
-}
-/* 支付方式外层保留卡片边框；图标区单独去线、透明底 */
-.mf-pos-inline-checkout .mf-pay-tile {
-  min-height: 72px;
-  padding: 8px 4px 6px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
-  border-radius: 0;
-  box-shadow: none !important;
-}
-.mf-pos-inline-checkout .mf-pay-tile:hover:not(:disabled) {
-  border-color: #bdbdbd;
-  background: #fafafa;
-}
-.mf-pos-inline-checkout .mf-pay-tile.pay-btn.active {
-  border: 2px solid var(--mf-green, #67c23a);
-  background: #f1f8e9;
-}
-.mf-pos-inline-checkout .mf-pay-tile__icon {
-  width: 52px;
-  height: 52px;
-  margin-bottom: 4px;
-  border: none;
-  border-radius: 0;
-  background: transparent !important;
-  box-shadow: none !important;
-  font-size: 2rem;
-}
-.mf-pos-inline-checkout .mf-pay-tile__icon--balance,
-.mf-pos-inline-checkout .mf-pay-tile__icon--scan,
-.mf-pos-inline-checkout .mf-pay-tile__icon--other {
-  background: transparent !important;
-  color: #424242;
-}
-.mf-pos-inline-checkout .mf-pay-tile__icon--img-wrap {
-  border: none !important;
-  background: transparent !important;
-}
-.mf-pos-inline-checkout .mf-pay-tile__icon .mf-pay-tile__img {
-  width: 48px;
-  height: 48px;
-  max-width: 100%;
-  max-height: 100%;
-}
-/* 收银台：参考 POS 键盘 — 右侧删除占两行 + 黄色确定占两行 */
-.mf-pos-inline-checkout .mf-keypad--pos-confirm {
-  flex: 1 1 auto;
-  width: 100%;
-  min-height: 0;
-  gap: 8px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: repeat(4, minmax(48px, 1fr));
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__btn {
-  height: 100%;
-  min-height: 48px;
-  font-size: clamp(18px, 2.2vmin, 26px);
-  font-weight: 600;
-  padding: 0 6px;
-  box-sizing: border-box;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r1c1 {
-  grid-column: 1;
-  grid-row: 1;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r1c2 {
-  grid-column: 2;
-  grid-row: 1;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r1c3 {
-  grid-column: 3;
-  grid-row: 1;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--del {
-  grid-column: 4;
-  grid-row: 1 / span 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(16px, 2vmin, 22px);
-  font-weight: 600;
-  color: #424242;
-  background: #fff;
-  border: 1px solid #dcdfe6;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--del:hover {
-  background: #f5f7fa;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r2c1 {
-  grid-column: 1;
-  grid-row: 2;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r2c2 {
-  grid-column: 2;
-  grid-row: 2;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r2c3 {
-  grid-column: 3;
-  grid-row: 2;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r3c1 {
-  grid-column: 1;
-  grid-row: 3;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r3c2 {
-  grid-column: 2;
-  grid-row: 3;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r3c3 {
-  grid-column: 3;
-  grid-row: 3;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--ok {
-  grid-column: 4;
-  grid-row: 3 / span 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  font-size: clamp(18px, 2.4vmin, 26px);
-  font-weight: 700;
-  color: #1a1a1a;
-  background: #ffc107;
-  border: 1px solid #e2a200;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--ok:hover:not(:disabled) {
-  background: #ffb300;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--ok:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__ok-hint {
-  display: block;
-  margin: 0;
-  font-size: 11px;
-  font-weight: 500;
-  opacity: 0.75;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r4c1 {
-  grid-column: 1;
-  grid-row: 4;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r4c2 {
-  grid-column: 2;
-  grid-row: 4;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__cell--r4c3 {
-  grid-column: 3;
-  grid-row: 4;
-}
-/* 实体键盘输入金额时，对应数字键短暂高亮 */
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__btn.mf-keypad__btn--lit {
-  transition: background 0.04s ease, box-shadow 0.04s ease;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__btn--lit:not(.mf-keypad__btn--ok):not(.mf-keypad__btn--del) {
-  background: #e3f2fd;
-  box-shadow: inset 0 0 0 2px #1976d2;
-}
-.mf-pos-inline-checkout .mf-keypad--pos-confirm .mf-keypad__btn--del.mf-keypad__btn--lit {
-  background: #fce4ec;
-  box-shadow: inset 0 0 0 2px #c2185b;
-}
-.mf-pos-inline-checkout.mf-checkout-inline--times {
-  max-width: none;
-  margin-left: 0;
-  margin-right: 0;
-}
-
-.mf-checkout-times-flow {
-  margin-bottom: 6px;
-}
-.mf-checkout-times-flow__info {
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  line-height: 1.55;
-  border-radius: 0;
-}
-.mf-pos-inline-checkout .mf-checkout-times-flow__info {
-  padding: 8px 10px;
-  margin-bottom: 6px;
-}
-.mf-pos-panel--checkout-form .mf-checkout-times-flow__info {
-  padding: 8px 10px;
-  margin-bottom: 6px;
-}
-
-/* 收银台：两栏共撑满一行，取消右侧 max-width 避免宽屏右侧留白 */
-.mf-pos-page .mf-pos-wrap {
-  width: 100%;
-  align-items: stretch;
-}
-
-.mf-pos-page .mf-pos-left {
-  flex: 1.15 1 0;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.mf-pos-page .mf-pos-right {
-  flex: 1 1 0;
-  min-width: 260px;
-  max-width: none;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-@media (min-width: 1200px) {
-  .mf-pos-page .mf-pos-wrap {
-    display: flex;
-    gap: 0.75rem;
-    align-items: stretch;
-    /* 两栏同高，购物车区纵向撑满，有商品时表格外仍有留白（同参考 ERP） */
-    min-height: calc(100vh - 124px);
-  }
-
-  .mf-pos-page .mf-pos-right .mf-pos-product-grid {
-    flex: 1 1 auto;
-    min-height: 160px;
-    align-content: start;
-  }
-}
-
-/* 无商品「会员消费」页：覆盖上方通用规则，避免 .mf-pos-left flex:1.15 撑满视口把查询/订单顶出可视区 */
-.mf-pos-page.mf-pos-page--fill .mf-pos-wrap {
-  min-height: 0;
-}
-@media (min-width: 1200px) {
-  .mf-pos-page.mf-pos-page--fill .mf-pos-wrap {
-    min-height: 0;
-  }
-}
-.mf-pos-page.mf-pos-page--fill .mf-pos-left {
-  flex: 0 0 auto;
-  flex-grow: 0;
-  flex-shrink: 0;
-  min-height: 0;
-  min-width: 0;
-  width: 100%;
-  max-width: none;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 会员消费：左侧「查询 + 订单」与右侧「收银台」并排 */
-.mf-pos-main-split {
-  display: grid;
-  grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
-  gap: 8px 12px;
-  align-items: stretch;
-  width: 100%;
-  box-sizing: border-box;
-}
-.mf-pos-main-split__col--search {
-  align-self: start;
-  min-width: 0;
-}
-.mf-pos-main-split__col--checkout {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-.mf-pos-main-split .mf-pos-fill-area--checkout {
-  margin-top: 0;
-  padding: 4px 2px 8px;
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
-}
-/* 并排后不再吸附整块查询区（避免遮挡右侧收银台） */
-.mf-pos-main-split .mf-pos-workspace-top {
-  position: static;
-  z-index: auto;
-  padding-bottom: 0;
-  margin-bottom: 0;
-  background: transparent;
-}
-@media (max-width: 768px) {
-  .mf-pos-main-split {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* 购物车面板：表体区域 flex 增高，明细少时下方留白；多时内部滚动 */
-.mf-pos-page .mf-pos-left > .mf-panel.mf-pos-cart-panel {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  margin-bottom: 0;
-}
-
-.mf-pos-page .mf-pos-left > .mf-panel.mf-pos-cart-panel .mf-pos-cart-table-wrap {
-  flex: 1 1 auto;
-  min-height: 200px;
-  overflow-x: auto;
-  overflow-y: auto;
-  background: #fff;
-}
-
-.mf-pos-page .mf-pos-left > .mf-panel.mf-pos-cart-panel .mf-panel__body {
-  flex-shrink: 0;
-}
-
-/* 收银台：卡片间距收紧 */
-.mf-pos-page--compact .mf-panel.mf-mb-3 {
-  margin-bottom: 6px !important;
-}
-.mf-pos-page--compact .mf-panel.mf-mb-2 {
-  margin-bottom: 5px !important;
-}
-.mf-pos-page--compact .mf-mt-3 {
-  margin-top: 6px !important;
-}
-.mf-pos-page--compact .mf-mt-2 {
-  margin-top: 5px !important;
-}
-.mf-pos-page--compact .mf-pos-footer-btns.mf-mt-3 {
-  margin-top: 8px !important;
-}
-.mf-pos-page--compact .mf-panel__body {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
-.mf-pos-member-placeholder {
-  border: 1px dashed #aad2ff;
-  border-radius: 0;
-  padding: 0.35rem 0.6rem;
-  background: #f8fbff;
-}
-
-.mf-pos-member-placeholder .lbl {
-  color: #78909c;
-  font-size: 12px;
-}
-
-.mf-pos-member-placeholder .val {
-  font-weight: 600;
-  color: #90a4ae;
-  letter-spacing: 0.05em;
-}
-
-/* 会员信息：卡号/姓名/手机/余额/次数 同一行 */
-.mf-pos-member-row {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0 1.25rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
-}
-.mf-pos-member-row::-webkit-scrollbar {
-  height: 4px;
-}
-.mf-pos-member-item {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-.mf-pos-member-item .lbl,
-.mf-pos-member-item .mf-text-muted {
-  margin-right: 4px;
-}
-
-.mf-category-scroll {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  gap: 0.35rem;
-  padding-bottom: 6px;
-  margin-bottom: 0.5rem;
-  -webkit-overflow-scrolling: touch;
-}
-
-.mf-category-scroll::-webkit-scrollbar {
-  height: 4px;
-}
-
-.mf-chip {
-  flex: 0 0 auto;
-  padding: 0.35rem 0.85rem;
-  border-radius: 20px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
-  font-size: 13px;
-  color: #555;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.mf-chip:hover {
-  border-color: var(--mf-green);
-  color: var(--mf-green-dark);
-}
-
-.mf-chip.active {
-  background: #e8f5e9;
-  border-color: var(--mf-green);
-  color: #1b5e20;
-  font-weight: 600;
-}
-
-/* 收银商品区：三列网格，间距紧凑 */
-.mf-pos-product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-  align-items: stretch;
-}
-@media (max-width: 1199px) {
-  .mf-pos-product-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (max-width: 575px) {
-  .mf-pos-product-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.mf-product-card {
-  cursor: pointer;
-  border-radius: var(--mf-card-radius);
-  border: 1px solid #e0e0e0;
-  overflow: hidden;
-  background: #fff;
-  transition: border-color 0.2s ease, background 0.2s ease;
-  height: 100%;
-  position: relative;
-}
-
-.mf-product-card:hover:not(.mf-product-card--posrow) {
-  border-color: #cfd8dc;
-  background: #fafafa;
-}
-
-/* 横向卡片：左图右文（与参考 ERP 一致） */
-.mf-product-card--posrow {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  min-height: 76px;
-}
-
-.mf-product-card--posrow:hover {
-  border-color: #e0e0e0;
-  background: #fff;
-}
-
-.mf-product-card__media {
-  position: relative;
-  flex: 0 0 76px;
-  width: 76px;
-  background: #eceff1;
-  border-right: 1px solid #e8e8e8;
-}
-
-.mf-product-card--posrow .tag {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  z-index: 2;
-  font-size: 10px;
-  padding: 1px 4px;
-  line-height: 1.3;
-  border: 1px solid currentColor;
-  background: #fff;
-  font-weight: 600;
-}
-
-.mf-product-card--posrow .tag.service {
-  color: #2e7d32;
-  border-color: #81c784;
-}
-
-.mf-product-card--posrow .tag.goods {
-  color: #455a64;
-  border-color: #90a4ae;
-}
-
-.mf-product-card--posrow .tag.package {
-  color: #00695c;
-  border-color: #4db6ac;
-}
-
-.mf-product-card__ph {
-  height: 100%;
-  min-height: 76px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #b0bec5;
-}
-
-.mf-product-card__img {
-  width: 100%;
-  height: 100%;
-  min-height: 76px;
-  object-fit: cover;
-  display: block;
-}
-
-.mf-product-card__info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 6px 8px 6px 10px;
-  background: #fff;
-}
-
-.mf-product-card__main {
-  flex: 1;
-  min-width: 0;
-}
-
-.mf-product-card--posrow .name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #303133;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin: 0;
-}
-
-.mf-product-card--posrow .price-row {
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.mf-product-card--posrow .price-row .sale {
-  color: #e53935;
-  font-weight: 600;
-}
-
-.mf-product-card--posrow .price-row .mem {
-  color: #fb8c00;
-}
-
-.mf-product-card__stock-wrap {
-  align-self: flex-end;
-  margin-top: 4px;
-}
-
-.mf-product-card--posrow .stock {
-  font-size: 11px;
-  color: #1976d2;
-  font-weight: 500;
-}
-
-.mf-pos-search-wrap {
-  position: relative;
-}
-
-.mf-pos-search-wrap .mf-input {
-  padding-right: 72px;
-  border-radius: 6px;
-}
-
-.mf-pos-search-wrap .btn-search-inner {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: var(--mf-green);
-  color: #fff;
-  font-size: 13px;
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
-}
-
-.mf-pos-footer-btns .mf-btn--lg {
-  min-width: 120px;
-}
-
-@media (max-width: 1199.98px) {
-  .mf-pos-page .mf-pos-wrap {
-    flex-direction: column;
-  }
-  .mf-pos-page .mf-pos-right {
-    max-width: none;
-  }
-}
-
-@media (max-width: 767.98px) {
-  .mf-sidebar {
-    width: 56px;
-  }
-  .mf-nav-link span {
-    display: none;
-  }
-  .mf-nav-link {
-    justify-content: center;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-  .mf-topbar-label {
-    display: none;
-  }
-  .mf-topbar-actions .mf-topbar-item {
-    min-width: 36px;
-  }
-}
-
-.mf-checkout-modal .keypad-btn {
-  min-height: 44px;
-}
-
-/* ---------- 收银台弹窗（参考云上铺布局） ---------- */
-.mf-checkout-modal__body {
-  padding: 16px 20px 20px;
-}
-.mf-checkout-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: start;
-}
-@media (max-width: 900px) {
-  .mf-checkout-layout {
-    grid-template-columns: 1fr;
-  }
-}
-.mf-checkout-rows {
-  border-top: 1px solid #eee;
-  padding-top: 12px;
-}
-.mf-checkout-rowline {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  gap: 8px;
-}
-.mf-checkout-rowline .lbl {
-  color: #909399;
-  font-size: 13px;
-}
-.mf-checkout-amt {
-  font-size: 18px;
-  font-weight: 700;
-}
-.mf-checkout-disc {
-  width: 120px;
-  text-align: right;
-}
-.mf-checkout-duebar {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-top: 8px;
-  padding: 12px 0;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-  font-size: 15px;
-}
-.mf-checkout-due-left strong {
-  font-size: 22px;
-  margin-left: 6px;
-}
-.mf-checkout-due-right {
-  color: #e53935;
-  font-size: 14px;
-}
-.mf-checkout-due-right strong {
-  font-size: 16px;
-  margin-left: 4px;
-}
-.mf-checkout-payfield {
-  margin-top: 14px;
-}
-.mf-checkout-payfield-lbl {
-  display: block;
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 6px;
-}
-.mf-checkout-payinput {
-  font-size: 20px;
-  font-weight: 600;
-  text-align: right;
-  padding: 10px 12px;
-  border-radius: 6px;
-}
-.mf-pay-tiles {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.mf-pay-tile {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 76px;
-  padding: 8px 4px 6px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-  font: inherit;
-  transition: border-color 0.15s, background 0.15s;
-}
-.mf-pay-tile:hover:not(:disabled) {
-  border-color: #bdbdbd;
-}
-.mf-pay-tile:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.mf-pay-tile.pay-btn.active {
-  border: 2px solid var(--mf-green);
-  background: #f1f8e9;
-}
-.mf-pay-tile--spacer {
-  visibility: hidden;
-  min-height: 0;
-  border: none;
-  padding: 0;
-  pointer-events: none;
-}
-.mf-pay-tile__icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 6px;
-  font-size: 1.15rem;
-}
-.mf-pay-tile__icon--cash {
-  background: #fff8e1;
-  color: #f57c00;
-}
-.mf-pay-tile__icon--balance {
-  background: #eceff1;
-  color: #546e7a;
-}
-.mf-pay-tile__icon--union {
-  background: #e3f2fd;
-  color: #1565c0;
-}
-.mf-pay-tile__icon--scan {
-  background: #f3e5f5;
-  color: #7b1fa2;
-}
-.mf-pay-tile__icon--wechat {
-  background: #07c160;
-  position: relative;
-}
-.mf-pay-tile__icon--wechat::before,
-.mf-pay-tile__icon--wechat::after {
-  content: "";
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #fff;
-  border-radius: 50%;
-  top: 9px;
-}
-.mf-pay-tile__icon--wechat::before {
-  left: 7px;
-}
-.mf-pay-tile__icon--wechat::after {
-  right: 7px;
-}
-.mf-pay-tile__icon--alipay {
-  background: #1677ff;
-  color: #fff;
-}
-.mf-alipay-zhi {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
-}
-.mf-pay-tile__icon--other {
-  background: #fafafa;
-  color: #757575;
-}
-.mf-pay-tile__icon--img-wrap {
-  background: transparent;
-  border: none;
-  overflow: visible;
-}
-.mf-pay-tile__icon .mf-pay-tile__img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  display: block;
-}
-.mf-pay-tile__txt {
-  font-weight: 600;
-  color: #333;
-  font-size: 13px;
-}
-.mf-pay-tile__key {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  font-size: 10px;
-  color: #9e9e9e;
-  font-weight: 500;
-}
-.mf-keypad {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-.mf-keypad__btn {
-  min-height: 44px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  background: #fff;
-  font-size: 17px;
-  font-weight: 600;
-  cursor: pointer;
-  color: #333;
-  font-family: inherit;
-}
-.mf-keypad__btn:hover {
-  background: #f5f5f5;
-}
-.mf-keypad__btn--note {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1976d2;
-  background: #f5f9ff;
-}
-.mf-keypad__btn--danger {
-  font-size: 13px;
-  font-weight: 600;
-  color: #c62828;
-  background: #ffebee;
-}
-.mf-checkout-footer {
-  display: flex;
-  gap: 10px;
-  align-items: stretch;
-  justify-content: flex-end;
-}
-.mf-checkout-footer .mf-checkout-confirm {
-  flex: 1;
-  min-width: 0;
-}
-.mf-kbd-hint {
-  font-size: 11px;
-  opacity: 0.65;
-  font-weight: 400;
-  margin-left: 4px;
-}
-
-/* 主内容区：面板横向铺满可用宽度 */
+/* 主内容区：面板横向铺满 */
 body.mf-app .mf-content .mf-panel {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
 
-/* ---------- 全局丝滑过渡（页面/导航/卡片） ---------- */
-@keyframes mf-page-enter {
-  from {
-    opacity: 0;
-    transform: translateX(28px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-body.mf-app .mf-main > .mf-content {
-  animation: mf-page-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.mf-btn {
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease,
-    transform 0.15s ease;
-}
-.mf-btn:active:not(:disabled) {
-  transform: scale(0.98);
-}
-.mf-panel {
-  transition: border-color 0.2s ease;
-}
-.mf-dropdown__menu {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-@media (prefers-reduced-motion: reduce) {
-  body.mf-app .mf-main > .mf-content {
-    animation: none;
-  }
-  .mf-btn,
-  .mf-panel,
-  .mf-product-card {
-    transition: none;
-  }
-}
-
-/* ---------- 全局直角（扁平 ERP，无圆角） ---------- */
-body.mf-app .mf-panel,
-body.mf-app .mf-panel__body,
-body.mf-app .mf-input,
-body.mf-app .mf-textarea,
-body.mf-app .mf-select,
-body.mf-app .mf-btn,
-body.mf-app .mf-table,
-body.mf-app .mf-modal__box,
-body.mf-app .mf-modal__close,
-body.mf-app .mf-alert,
-body.mf-app .mf-dropdown__menu,
-body.mf-app .mf-tab,
-body.mf-app .mf-product-card,
-body.mf-app .mf-chip,
-body.mf-app .mf-tag,
-body.mf-app .mf-stat-card,
-body.mf-app .mf-keypad__btn,
-body.mf-app .mf-pay-tile,
-body.mf-app .btn-search-inner,
-body.mf-app .mf-toast,
-body.mf-app .mf-confirm__box,
-body.mf-app .mf-nav-link,
-body.mf-app .mf-logo,
-body.mf-app .mf-logo-yin,
-body.mf-app .mf-badge,
-body.mf-app .mf-toast__icon,
-body.mf-app .mf-product-card .tag,
-body.mf-app .mf-input-group .mf-input,
-body.mf-app .mf-input-group .mf-btn,
-body.mf-app .mf-input-group__prepend,
-body.mf-app .mf-input-group__append,
-body.mf-app .mf-pagination a,
-body.mf-app .mf-pagination button,
-body.mf-app .mf-checkout-payinput,
-body.mf-app .mf-topbar-item,
-body.mf-app .mf-pay-tile__icon,
-body.mf-app .mf-pos-search-wrap .mf-input,
-body.mf-app .mf-alipay-zhi {
-  border-radius: 0 !important;
-}
-
-body.mf-app .mf-panel {
-  margin-bottom: 12px;
-}
-
-/* 扁平：卡片/模块无悬浮阴影 */
-body.mf-app .mf-panel,
-body.mf-app .mf-stat-card {
-  box-shadow: none !important;
-}
-body.mf-app .mf-dropdown__menu {
-  box-shadow: none !important;
-}
-body.mf-app .mf-modal__box {
-  box-shadow: none !important;
-  border: 1px solid #dcdfe6;
-}
-body.mf-app .mf-toast {
-  box-shadow: none !important;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-body.mf-app .mf-confirm__box {
-  box-shadow: none !important;
-  border: 1px solid #ebeef5;
-}
-
-/* ---------- 仪表盘彩色统计卡（参考 ERP 大屏） ---------- */
+/* 仪表盘彩色统计卡 */
 body.mf-app .mf-stat-dashboard {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -1744,7 +450,6 @@ body.mf-app .mf-stat-tile__value {
   color: #fff;
   letter-spacing: 0.02em;
 }
-/* 昨日 / 上月对比（参考数据大屏小字） */
 body.mf-app .mf-stat-tile__compare {
   margin-top: 6px;
   font-size: 11px;
@@ -1783,94 +488,90 @@ body.mf-app .mf-stat-tile--amber {
   background: #fb8c00;
 }
 
-/* ---------- 会员充值 / 钱包页 ---------- */
-.mf-wallet-tabs .mf-wallet-tab {
-  border: 1px solid #e0e0e0;
-  background: #fff;
-  padding: 8px 18px;
-  font-size: 14px;
-  color: #555;
-  cursor: pointer;
-  margin: 0;
-}
-.mf-wallet-tabs .mf-wallet-tab.active {
-  background: #ff6633;
-  border-color: #ff6633;
-  color: #fff;
-  font-weight: 600;
-}
-.mf-wallet-card-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-@media (min-width: 768px) {
-  .mf-wallet-card-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+/* 响应式 */
+@media (max-width: 767.98px) {
+  .mf-sidebar {
+    width: 56px;
+  }
+  .mf-nav-link span {
+    display: none;
+  }
+  .mf-nav-link {
+    justify-content: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .mf-topbar-label {
+    display: none;
+  }
+  .mf-topbar-actions .mf-topbar-item {
+    min-width: 36px;
   }
 }
-.mf-wallet-amount-card {
-  border: 1px solid #e0e0e0;
-  background: #fff;
-  padding: 12px 10px;
-  text-align: center;
-  cursor: pointer;
-  line-height: 1.35;
-}
-.mf-wallet-amount-card .amt {
-  display: block;
-  font-size: 18px;
-  font-weight: 700;
-  color: #e53935;
-}
-.mf-wallet-amount-card .gift {
-  display: block;
-  font-size: 12px;
-  color: #78909c;
-  margin-top: 4px;
-}
-.mf-wallet-amount-card.is-active {
-  border-color: #ff6633;
-  box-shadow: inset 0 0 0 2px #ff6633;
-}
-.mf-wallet-money.mf-input-group .mf-input-group__prepend,
-.mf-wallet-money.mf-input-group .mf-input-group__append {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 10px;
-  border: 1px solid #dcdfe6;
-  background: #f5f7fa;
-  font-size: 13px;
-  color: #606266;
-  flex-shrink: 0;
-}
-.mf-wallet-money.mf-input-group .mf-input-group__prepend {
-  border-right: 0;
-}
-.mf-wallet-money.mf-input-group .mf-input-group__append {
-  border-left: 0;
-}
-.mf-wallet-money.mf-input-group .mf-input {
-  flex: 1;
-  min-width: 0;
-  border-radius: 0;
+
+/* 面板样式 */
+body.mf-app .mf-panel {
+  margin-bottom: 12px;
+  border-radius: 8px;
 }
 
-/* 登录/安装页（无 mf-app 包裹） */
+/* 扁平：卡片/模块无悬浮阴影 */
+body.mf-app .mf-panel,
+body.mf-app .mf-stat-card {
+  box-shadow: none !important;
+}
+body.mf-app .mf-dropdown__menu {
+  box-shadow: none !important;
+  border-radius: 8px;
+}
+body.mf-app .mf-modal__box {
+  box-shadow: none !important;
+  border: 1px solid #dcdfe6;
+  border-radius: 12px;
+}
+body.mf-app .mf-toast {
+  box-shadow: none !important;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+body.mf-app .mf-confirm__box {
+  box-shadow: none !important;
+  border: 1px solid #ebeef5;
+  border-radius: 12px;
+}
+
+/* 表格样式 */
+.table-mf thead th {
+  background: #f5f6f8;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* 登录页 */
 .mf-login-page .mf-panel,
+.mf-login-page .mf-alert,
+.mf-install-wrap .mf-panel,
+.mf-install-wrap .mf-alert {
+  border-radius: 8px !important;
+}
+
 .mf-login-page .mf-input,
 .mf-login-page .mf-btn,
-.mf-login-page .mf-alert,
-.mf-login-page .mf-logo,
-.mf-login-page .mf-logo-yin,
-.mf-install-wrap .mf-panel,
 .mf-install-wrap .mf-input,
-.mf-install-wrap .mf-btn,
-.mf-install-wrap .mf-alert {
-  border-radius: 0 !important;
+.mf-install-wrap .mf-btn {
+  border-radius: 8px !important;
 }
 
-/* ---------- 登录页（极简高端风格 + 精致动画 + 优雅色彩） ---------- */
+.mf-login-page .mf-logo,
+.mf-login-page .mf-logo-yin,
+.mf-install-wrap .mf-logo,
+.mf-install-wrap .mf-logo-yin {
+  border-radius: 50% !important;
+}
+
+/* ---------- 登录页（极简高端风格） ---------- */
 .mf-login-page.mf-login-page--cloud {
   min-height: 100vh;
   margin: 0;
@@ -1953,7 +654,7 @@ body.mf-app .mf-stat-tile--amber {
   overflow: hidden;
 }
 
-/* 呼吸圆形脉冲 - 明显的圆形轮廓 */
+/* 呼吸圆形脉冲 */
 .mf-login-cloud__hero-bg::before {
   content: "";
   position: absolute;
@@ -1970,7 +671,6 @@ body.mf-app .mf-stat-tile--amber {
     inset 0 0 60px rgba(139, 92, 246, 0.05);
 }
 
-/* 第二层呼吸圆 */
 .mf-login-cloud__hero-bg::after {
   content: "";
   position: absolute;
@@ -1987,41 +687,14 @@ body.mf-app .mf-stat-tile--amber {
     inset 0 0 40px rgba(236, 72, 153, 0.03);
 }
 
-/* 浮动粒子效果 - 通过伪元素无法实现，在HTML中添加 */
-
 @keyframes breathing-circle {
   0%, 100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 0.6;
-    box-shadow:
-      0 0 0 0 rgba(99, 102, 241, 0.1),
-      inset 0 0 60px rgba(139, 92, 246, 0.05);
   }
   50% {
     transform: translate(-50%, -50%) scale(1.15);
     opacity: 1;
-    box-shadow:
-      0 0 0 20px rgba(99, 102, 241, 0.05),
-      0 0 80px rgba(139, 92, 246, 0.1),
-      inset 0 0 80px rgba(139, 92, 246, 0.08);
-  }
-}
-
-/* 漂浮光点动画 */
-@keyframes float-particle {
-  0%, 100% {
-    transform: translateY(0) translateX(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100vh) translateX(20px);
-    opacity: 0;
   }
 }
 
@@ -2042,60 +715,29 @@ body.mf-app .mf-stat-tile--amber {
   animation: float-particle 8s ease-in-out infinite;
 }
 
-.mf-login-particle--1 {
-  left: 10%;
-  bottom: -20px;
-  animation-delay: 0s;
-  animation-duration: 7s;
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
 }
 
-.mf-login-particle--2 {
-  left: 25%;
-  bottom: -20px;
-  animation-delay: 1s;
-  animation-duration: 9s;
-  width: 4px;
-  height: 4px;
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.5), rgba(244, 114, 182, 0.3));
-}
-
-.mf-login-particle--3 {
-  left: 45%;
-  bottom: -20px;
-  animation-delay: 2s;
-  animation-duration: 8s;
-  width: 8px;
-  height: 8px;
-}
-
-.mf-login-particle--4 {
-  left: 65%;
-  bottom: -20px;
-  animation-delay: 3s;
-  animation-duration: 10s;
-  width: 5px;
-  height: 5px;
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.5), rgba(244, 114, 182, 0.3));
-}
-
-.mf-login-particle--5 {
-  left: 80%;
-  bottom: -20px;
-  animation-delay: 4s;
-  animation-duration: 7.5s;
-  width: 4px;
-  height: 4px;
-}
-
-.mf-login-particle--6 {
-  left: 90%;
-  bottom: -20px;
-  animation-delay: 5s;
-  animation-duration: 9.5s;
-  width: 7px;
-  height: 7px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(168, 85, 247, 0.3));
-}
+.mf-login-particle--1 { left: 10%; bottom: -20px; animation-delay: 0s; animation-duration: 7s; }
+.mf-login-particle--2 { left: 25%; bottom: -20px; animation-delay: 1s; animation-duration: 9s; width: 4px; height: 4px; }
+.mf-login-particle--3 { left: 45%; bottom: -20px; animation-delay: 2s; animation-duration: 8s; width: 8px; height: 8px; }
+.mf-login-particle--4 { left: 65%; bottom: -20px; animation-delay: 3s; animation-duration: 10s; width: 5px; height: 5px; }
+.mf-login-particle--5 { left: 80%; bottom: -20px; animation-delay: 4s; animation-duration: 7.5s; width: 4px; height: 4px; }
+.mf-login-particle--6 { left: 90%; bottom: -20px; animation-delay: 5s; animation-duration: 9.5s; width: 7px; height: 7px; }
 
 .mf-login-cloud__hero-inner {
   position: relative;
@@ -2124,69 +766,6 @@ body.mf-app .mf-stat-tile--amber {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -0.02em;
-  position: relative;
-  display: inline-block;
-  padding-bottom: 20px;
-}
-
-/* 标题装饰 - 优雅的点线组合 */
-.mf-login-cloud__pitch-title::before {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 50px;
-  height: 3px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
-  border-radius: 3px;
-  animation: line-expand 0.8s ease-out 0.5s both;
-}
-
-/* 两端小圆点装饰 */
-.mf-login-cloud__pitch-title::after {
-  content: "";
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border-radius: 50%;
-  animation: dot-appear 0.5s ease-out 0.9s both;
-  box-shadow:
-    -12px 0 0 rgba(236, 72, 153, 0.6),
-    12px 0 0 rgba(99, 102, 241, 0.6);
-}
-
-@keyframes line-expand {
-  0% {
-    width: 0;
-    opacity: 0;
-  }
-  100% {
-    width: 50px;
-    opacity: 1;
-  }
-}
-
-@keyframes dot-appear {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) scale(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-  }
-}
-
-.mf-login-cloud__features {
-  font-size: 15px;
-  line-height: 1.6;
-  color: #64748b;
-  margin: 0;
 }
 
 .mf-login-cloud__card {
@@ -2196,65 +775,10 @@ body.mf-app .mf-stat-tile--amber {
   padding: 48px 44px;
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 24px;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 20px 50px -12px rgba(99, 102, 241, 0.15);
-  animation: card-enter-v2 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
-  position: relative;
+  box-shadow: 0 20px 50px -12px rgba(99, 102, 241, 0.15);
+  animation: card-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
 }
 
-/* 卡片入场动画 - 更炫酷 */
-@keyframes card-enter-v2 {
-  0% {
-    opacity: 0;
-    transform: translateY(60px) scale(0.9) rotateX(10deg);
-    filter: blur(10px);
-  }
-  60% {
-    opacity: 1;
-    transform: translateY(-10px) scale(1.02) rotateX(0deg);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1) rotateX(0deg);
-    filter: blur(0);
-  }
-}
-
-/* 卡片内部元素依次显现 */
-.mf-login-cloud__card-title {
-  animation: card-content-enter 0.5s ease-out 0.6s both;
-}
-
-.mf-login-cloud__field:nth-child(1) {
-  animation: card-content-enter 0.5s ease-out 0.7s both;
-}
-
-.mf-login-cloud__field:nth-child(2) {
-  animation: card-content-enter 0.5s ease-out 0.85s both;
-}
-
-.mf-login-cloud__remember-row {
-  animation: card-content-enter 0.5s ease-out 1s both;
-}
-
-.mf-login-cloud__submit {
-  animation: card-content-enter 0.5s ease-out 1.15s both;
-}
-
-@keyframes card-content-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 移除之前的动画定义 */
 @keyframes card-enter {
   from {
     opacity: 0;
@@ -2279,56 +803,16 @@ body.mf-app .mf-stat-tile--amber {
 
 .mf-login-cloud__card-title {
   margin: 0 0 36px;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   text-align: center;
-  position: relative;
-}
-
-/* 卡片标题装饰 */
-.mf-login-cloud__card-title::before,
-.mf-login-cloud__card-title::after {
-  content: "";
-  display: inline-block;
-  width: 30px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3));
-  vertical-align: middle;
-  margin: 0 12px;
-  opacity: 0;
-  animation: title-line-enter 0.5s ease-out 0.8s forwards;
-}
-
-.mf-login-cloud__card-title::after {
-  background: linear-gradient(90deg, rgba(99, 102, 241, 0.3), transparent);
-}
-
-@keyframes title-line-enter {
-  to {
-    opacity: 1;
-    width: 40px;
-  }
 }
 
 .mf-login-cloud__field {
   margin-bottom: 20px;
-}
-
-.mf-login-cloud__field:nth-child(1) { animation-delay: 0.7s; }
-.mf-login-cloud__field:nth-child(2) { animation-delay: 0.85s; }
-
-@keyframes field-enter {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .mf-login-cloud__input-wrap {
@@ -2340,50 +824,21 @@ body.mf-app .mf-stat-tile--amber {
   background: #fff;
   border-radius: 12px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-/* 输入框聚焦时的光晕效果 */
-.mf-login-cloud__input-wrap::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: -1;
-}
-
-.mf-login-cloud__input-wrap:focus-within::before {
-  opacity: 1;
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
 }
 
 .mf-login-cloud__input-wrap:focus-within {
   border-color: #6366f1;
-  box-shadow:
-    0 0 0 4px rgba(99, 102, 241, 0.1),
-    0 4px 20px rgba(99, 102, 241, 0.15);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
 .mf-login-cloud__input-wrap > .bi {
   flex-shrink: 0;
   font-size: 18px;
   color: #94a3b8;
-  transition: all 0.3s ease;
 }
 
 .mf-login-cloud__input-wrap:focus-within > .bi {
   color: #6366f1;
-  transform: scale(1.1);
 }
 
 .mf-login-cloud__input {
@@ -2395,21 +850,30 @@ body.mf-app .mf-stat-tile--amber {
   font-size: 15px;
   color: #1e293b;
   outline: none;
-  transition: all 0.3s ease;
 }
 
-.mf-login-cloud__input:focus {
-  transform: translateX(2px);
-}
-
-.mf-login-cloud__input::placeholder {
-  color: #cbd5e1;
-  transition: color 0.3s ease, opacity 0.3s ease;
-}
-
-.mf-login-cloud__input:focus::placeholder {
+.mf-login-cloud__toggle-password {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   color: #94a3b8;
-  opacity: 0.7;
+  font-size: 18px;
+  transition: color 0.2s ease;
+}
+
+.mf-login-cloud__toggle-password:hover {
+  color: #6366f1;
+}
+
+.mf-login-cloud__input-wrap:focus-within .mf-login-cloud__toggle-password {
+  color: #6366f1;
+}
+
+.mf-login-cloud__input-placeholder {
+  flex-shrink: 0;
+  width: 18px;
 }
 
 .mf-login-cloud__remember-row {
@@ -2423,92 +887,30 @@ body.mf-app .mf-stat-tile--amber {
   font-size: 14px;
   color: #64748b;
   cursor: pointer;
-  user-select: none;
-  transition: color 0.2s ease;
-}
-
-.mf-login-cloud__remember:hover {
-  color: #4f46e5;
 }
 
 .mf-login-cloud__remember input {
   width: 18px;
   height: 18px;
   accent-color: #6366f1;
-  cursor: pointer;
 }
 
 .mf-login-cloud__submit {
   width: 100%;
   border: none;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-  background-size: 200% 200%;
   color: #fff;
   font-size: 15px;
   font-weight: 600;
   padding: 18px 24px;
   border-radius: 14px;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing: 0.05em;
-  position: relative;
-  overflow: hidden;
-}
-
-/* 按钮内部光效 */
-.mf-login-cloud__submit::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-  transition: left 0.6s ease;
-}
-
-/* 按钮底部发光 */
-.mf-login-cloud__submit::after {
-  content: "";
-  position: absolute;
-  bottom: -10px;
-  left: 10%;
-  right: 10%;
-  height: 20px;
-  background: radial-gradient(ellipse, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
-  opacity: 0;
-  transition: opacity 0.4s ease, bottom 0.4s ease;
-  filter: blur(10px);
-}
-
-.mf-login-cloud__submit:hover::before {
-  left: 100%;
-}
-
-.mf-login-cloud__submit:hover::after {
-  opacity: 1;
-  bottom: -5px;
+  transition: all 0.4s;
 }
 
 .mf-login-cloud__submit:hover {
-  background-position: 100% 0;
   transform: translateY(-3px);
-  box-shadow:
-    0 10px 30px -10px rgba(99, 102, 241, 0.5),
-    0 15px 40px -15px rgba(139, 92, 246, 0.4);
-}
-
-.mf-login-cloud__submit:active {
-  transform: translateY(-1px) scale(0.98);
-  box-shadow:
-    0 5px 15px -5px rgba(99, 102, 241, 0.4),
-    0 8px 20px -8px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.5);
 }
 
 .mf-login-cloud__footer {
@@ -2516,15 +918,13 @@ body.mf-app .mf-stat-tile--amber {
   text-align: center;
   padding: 50px 40px 30px;
   background: transparent;
-  animation: fade-in-up 0.6s ease-out 1.3s both;
 }
 
 .mf-login-cloud__slogan {
   margin: 0 0 10px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #64748b;
-  letter-spacing: 0.08em;
 }
 
 .mf-login-cloud__copy {
@@ -2537,164 +937,30 @@ body.mf-app .mf-stat-tile--amber {
   .mf-login-cloud__header {
     padding: 16px 20px;
   }
-
   .mf-login-cloud__hero {
     padding: 30px 20px;
   }
-
   .mf-login-cloud__card {
     padding: 36px 28px;
     border-radius: 20px;
   }
-
   .mf-login-cloud__pitch-title {
     font-size: 32px;
   }
-
   .mf-login-cloud__footer {
     padding: 40px 20px 24px;
   }
 }
 
-/* 减少动画模式 */
+/* 减少动画 */
 @media (prefers-reduced-motion: reduce) {
   .mf-login-cloud__hero-bg::before,
-  .mf-login-cloud__hero-bg::after {
+  .mf-login-cloud__hero-bg::after,
+  .mf-login-particle {
     animation: none;
   }
-
   .mf-login-cloud__pitch,
-  .mf-login-cloud__card,
-  .mf-login-cloud__field,
-  .mf-login-cloud__remember-row,
-  .mf-login-cloud__submit,
-  .mf-login-cloud__footer {
+  .mf-login-cloud__card {
     animation: none;
   }
-
-  .mf-login-cloud__pitch-title::after {
-    animation: none;
-    width: 60px;
-    left: calc(50% - 30px);
-  }
-}
-
-/* ---------- 营收报表：四卡横向 ---------- */
-.mf-report-revenue-cards {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  align-items: stretch;
-}
-.mf-report-revenue-cards__item {
-  min-width: 0;
-  height: 100%;
-}
-@media (max-width: 1100px) {
-  .mf-report-revenue-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (max-width: 520px) {
-  .mf-report-revenue-cards {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ---------- 营收报表：支付方式入口 ---------- */
-.mf-report-pay-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-  gap: 10px;
-}
-.mf-report-pay-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 12px 14px;
-  border: 1px solid #ebeef5;
-  background: #fff;
-  text-decoration: none;
-  color: inherit;
-  transition: border-color 0.15s, background 0.15s;
-}
-.mf-report-pay-cell:hover {
-  border-color: var(--mf-green, #67c23a);
-  background: #f9fff5;
-}
-.mf-report-pay-cell__head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-}
-.mf-report-pay-cell__icon {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #606266;
-}
-.mf-report-pay-cell__icon .bi {
-  font-size: 1.35rem;
-  line-height: 1;
-}
-.mf-report-pay-cell__icon-img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  display: block;
-}
-.mf-report-pay-cell__name {
-  font-weight: 600;
-  color: #303133;
-  font-size: 14px;
-  min-width: 0;
-}
-.mf-report-pay-cell__amt {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #67c23a;
-  margin-top: 8px;
-}
-.mf-report-pay-cell__cnt {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 2px;
-}
-.mf-report-pay-cell__hint {
-  font-size: 11px;
-  color: #c0c4cc;
-  margin-top: 8px;
-}
-
-/* 营收报表：周期按钮与自定义日期同一行 */
-.mf-report-pay-toolbar__controls {
-  justify-content: flex-end;
-}
-.mf-report-custom-inline {
-  margin: 0;
-}
-.mf-report-custom-inline__lbl-txt {
-  white-space: nowrap;
-}
-.mf-input-icon-date {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-.mf-input-icon-date .bi {
-  position: absolute;
-  left: 8px;
-  font-size: 0.95rem;
-  color: #909399;
-  pointer-events: none;
-  z-index: 1;
-}
-.mf-input-icon-date .mf-input {
-  padding-left: 28px;
-  min-width: 148px;
 }

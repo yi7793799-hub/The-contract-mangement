@@ -232,7 +232,7 @@ ob_start();
       <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">状态</label><select class="mf-select" name="status"><option value="">全部</option><option value="ongoing"<?= $statusFilter==='ongoing'?' selected':'' ?>>进行中</option><option value="completed"<?= $statusFilter==='completed'?' selected':'' ?>>已完成</option><option value="terminated"<?= $statusFilter==='terminated'?' selected':'' ?>>已终止</option><option value="expiring"<?= $statusFilter==='expiring'?' selected':'' ?>>即将到期</option><option value="expired"<?= $statusFilter==='expired'?' selected':'' ?>>已过期</option></select></div>
       <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">合同类型</label><select class="mf-select" name="type_id"><option value="0">全部</option><?php foreach ($types as $t): ?><option value="<?= (int) $t['id'] ?>"<?= (int)$t['id']===$typeFilter?' selected':'' ?>><?= e((string)$t['name']) ?></option><?php endforeach; ?></select></div>
       <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">金额达标</label><select class="mf-select" name="reach"><option value=""<?= $reachFilter===''?' selected':'' ?>>全部</option><option value="1"<?= $reachFilter==='1'?' selected':'' ?>>已达标</option><option value="0"<?= $reachFilter==='0'?' selected':'' ?>>未达标</option></select></div>
-      <div class="mf-col mf-col-12 mf-col-md-3 mf-toolbar-actions"><button class="mf-btn mf-btn--primary">查询</button><a class="mf-btn mf-btn--default" href="<?= e(url('orders.php' . ($biz !== '' ? ('?biz=' . $biz) : ''))) ?>">重置</a><span class="mf-flex-grow mf-toolbar-actions__spacer"></span><a class="mf-btn mf-btn--default" href="<?= e(url('contracts_export.php' . ($exportQuery !== '' ? ('?' . $exportQuery) : ''))) ?>">导出</a><a class="mf-btn mf-btn--primary" href="<?= e(url('contract_form.php' . ($biz !== '' ? ('?payment_type=' . $biz) : ''))) ?>">+ 新增合同</a></div>
+      <div class="mf-col mf-col-12 mf-col-md-3 mf-toolbar-actions"><button class="mf-btn mf-btn--primary">查询</button><a class="mf-btn mf-btn--default" href="<?= e(url('orders.php' . ($biz !== '' ? ('?biz=' . $biz) : ''))) ?>">重置</a><span class="mf-flex-grow mf-toolbar-actions__spacer"></span><?php if ($biz !== ''): ?><a class="mf-btn mf-btn--success" href="<?= e(url('import.php?biz=' . $biz)) ?>"><i class="bi bi-upload"></i> 批量导入</a><?php endif; ?><a class="mf-btn mf-btn--default" href="<?= e(url('contracts_export.php' . ($exportQuery !== '' ? ('?' . $exportQuery) : ''))) ?>">导出</a><a class="mf-btn mf-btn--primary" href="<?= e(url('contract_form.php' . ($biz !== '' ? ('?payment_type=' . $biz) : ''))) ?>">+ 新增合同</a></div>
     </form>
   </div>
 </div>
@@ -260,8 +260,8 @@ ob_start();
       <tr>
         <th>合同编号</th>
         <th>合同名称</th>
-        <th>类型</th>
-        <th>款项类型</th>
+        <?php if ($biz === ''): ?><th>类型</th><?php endif; ?>
+        <?php if ($biz === ''): ?><th>款项类型</th><?php endif; ?>
         <th>签约方</th>
         <th>合同金额</th>
         <th>已登记金额</th>
@@ -285,8 +285,8 @@ ob_start();
               style="display:inline-block;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom;"
             ><?= e((string) $r['contract_name']) ?></a>
           </td>
-          <td><?= e((string) ($r['type_name'] ?: '-')) ?></td>
-          <td><?= mf_payment_type_badge((string) ($r['payment_type'] ?? 'receipt')) ?></td>
+          <?php if ($biz === ''): ?><td><?= e((string) ($r['type_name'] ?: '-')) ?></td><?php endif; ?>
+          <?php if ($biz === ''): ?><td><?= mf_payment_type_badge((string) ($r['payment_type'] ?? 'receipt')) ?></td><?php endif; ?>
           <td><?= e((string) $r['signer_party']) ?></td>
           <td>¥<?= number_format((float) $r['amount'], 2) ?></td>
           <td>¥<?= number_format((float) $r['done_amount'], 2) ?></td>
@@ -350,7 +350,7 @@ ob_start();
         </tr>
       <?php endforeach; ?>
       <?php if (!$rows): ?>
-        <tr><td colspan="14" class="mf-text-center mf-text-muted mf-p-4">暂无合同</td></tr>
+        <tr><td colspan="<?= $biz !== '' ? '12' : '14' ?>" class="mf-text-center mf-text-muted mf-p-4">暂无合同</td></tr>
       <?php endif; ?>
       </tbody>
     </table>
