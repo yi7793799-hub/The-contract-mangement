@@ -12,8 +12,12 @@
 <?php include __DIR__ . '/../../includes/layout.php'; ?>
 
 <div class="container-fluid">
-    <div class="page-header">
-        <h1>待审核合同</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="<?= url('/import') ?>" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 返回导入页
+        </a>
+        <h1 class="mb-0">📥 待审核合同列表</h1>
+        <div style="width: 120px;"></div>
     </div>
 
     <?php if (isset($_SESSION['success'])): ?>
@@ -90,10 +94,6 @@
             <?php endif; ?>
             <?php endif; ?>
         </div>
-    </div>
-
-    <div class="mt-3">
-        <a href="<?= url('/import') ?>" class="btn btn-secondary">返回导入页</a>
     </div>
 </div>
 

@@ -49,10 +49,10 @@ class ImportController
         ob_start();
         ?>
         <div class="mf-panel">
-            <div class="mf-panel__header">
-                <h3><?= e($bizName) ?>批量导入</h3>
+            <div class="mf-panel__header" style="justify-content: center; position: relative;">
+                <h3 style="text-align: center; width: 100%;">📥 <?= e($bizName) ?>批量导入</h3>
                 <?php if ($biz): ?>
-                <div class="mf-panel__actions">
+                <div class="mf-panel__actions" style="position: absolute; left: 0;">
                     <a href="<?= e(url('orders.php?biz=' . $biz)) ?>" class="mf-btn mf-btn--default">
                         <i class="bi bi-arrow-left"></i> 返回<?= e($bizName) ?>列表
                     </a>
@@ -112,16 +112,52 @@ class ImportController
                         </div>
                     </div>
 
-                    <div class="mf-form-item mf-mt-3">
-                        <button type="submit" class="mf-btn mf-btn--primary" id="submitBtn" disabled>
-                            <i class="bi bi-upload"></i> 开始导入
-                        </button>
+                    <div class="mf-form-item mf-mt-3" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <button type="submit" class="mf-btn mf-btn--primary" id="submitBtn" disabled>
+                                <i class="bi bi-upload"></i> 开始导入
+                            </button>
 
-                        <a href="<?= url('import/review.php' . ($biz ? '?biz=' . $biz : '')) ?>" class="mf-btn mf-btn--warning">
-                            查看待审核<?= e($bizName) ?> <?php if ($pendingCount > 0): ?> (<?= $pendingCount ?>) <?php endif; ?>
-                        </a>
+                            <a href="<?= url('import/review.php' . ($biz ? '?biz=' . $biz : '')) ?>" class="mf-btn mf-btn--warning">
+                                查看待审核<?= e($bizName) ?> <?php if ($pendingCount > 0): ?> (<?= $pendingCount ?>) <?php endif; ?>
+                            </a>
+                        </div>
+
+                        <div id="apiBalance" style="font-size: 14px; color: #606266;">
+                            <i class="bi bi-cpu"></i> DeepSeek API 余额: <span id="deepseekBalance" style="font-weight: bold; color: #409eff;">查询中...</span> 元
+                        </div>
                     </div>
                 </form>
+
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    fetch('<?= url('api/api-balance.php') ?>', { credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(res => {
+                            const balanceEl = document.getElementById('deepseekBalance');
+
+                            if (res.success && res.data.deepseek.success) {
+                                const balance = res.data.deepseek.total_balance;
+                                balanceEl.textContent = balance.toFixed(2);
+
+                                if (balance <= 0) {
+                                    balanceEl.style.color = '#f56c6c';
+                                } else if (balance < 5) {
+                                    balanceEl.style.color = '#e6a23c';
+                                } else {
+                                    balanceEl.style.color = '#67c23a';
+                                }
+                            } else {
+                                balanceEl.textContent = '查询失败';
+                                balanceEl.style.color = '#f56c6c';
+                            }
+                        })
+                        .catch(err => {
+                            document.getElementById('deepseekBalance').textContent = '网络错误';
+                            document.getElementById('deepseekBalance').style.color = '#f56c6c';
+                        });
+                });
+                </script>
 
                 <div class="mf-panel mf-mt-3" style="background:#f8f9fa;">
                     <div class="mf-panel__header">导入说明</div>
@@ -134,8 +170,8 @@ class ImportController
                             <?php elseif ($biz === 'payment'): ?>
                             <li>重点识别：<strong>供应商名称、项目名称、付款事由</strong>、合同编号、金额、签订日期等</li>
                             <?php else: ?>
-                            <li>使用 SiliconFlow OCR 识别图片和扫描版 PDF</li>
-                            <li>使用 DeepSeek 大模型进行语义校验</li>
+                            <li>使用 Gitee AI OCR 识别图片和扫描版 PDF</li>
+                            <li>使用 DeepSeek 大模型提取合同字段</li>
                             <?php endif; ?>
                             <li>低置信度<?= e($bizName) ?>将标记为待审核状态</li>
                             <li>原始文件将保存为<?= e($bizName) ?>附件</li>
@@ -794,8 +830,8 @@ class ImportController
         ob_start();
         ?>
         <div class="mf-panel">
-            <div class="mf-panel__header">
-                <h3>📥 待审核<?= e($bizName) ?>列表</h3>
+            <div class="mf-panel__header" style="flex-direction: row-reverse;">
+                <h3 style="position: absolute; left: 50%; transform: translateX(+20%);">📥 待审核<?= e($bizName) ?>列表</h3>
                 <div class="mf-panel__actions">
                     <a href="<?= url('import.php' . ($biz ? '?biz=' . $biz : '')) ?>" class="mf-btn mf-btn--default">
                         <i class="bi bi-arrow-left"></i> 返回导入
@@ -1095,9 +1131,9 @@ class ImportController
                                     <label class="mf-label">生效日期</label>
                                     <input type="date" name="effective_date" class="mf-input" value="<?= e($contract['effective_date'] ?? '') ?>">
                                 </div>
-                                <div class="mf-form-item">
-                                    <label class="mf-label">截止日期</label>
-                                    <input type="date" name="expiry_date" class="mf-input" value="<?= e($contract['expiry_date'] ?? '') ?>">
+                                <div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;">
+                                    <label class="mf-label" style="color:#d48806;font-weight:700;">截止日期</label>
+                                    <input type="date" name="expiry_date" class="mf-input" value="<?= e($contract['expiry_date'] ?? '') ?>" style="border-color:#d48806;font-weight:700;font-size:15px;">
                                 </div>
                             </div>
 

@@ -91,45 +91,91 @@ function money_to_cn(float $n): string
     if ($n <= 0) {
         return '零元整';
     }
+
     $digit = ['零','壹','贰','叁','肆','伍','陆','柒','捌','玖'];
     $unit1 = ['','拾','佰','仟'];
-    $unit2 = ['','万','亿','兆'];
+    $unit2 = ['','万','亿'];
+
     $int = (int) floor($n);
     $dec = (int) round(($n - $int) * 100);
-    $s = (string) $int;
+
     $out = '';
-    $zero = false;
-    $len = strlen($s);
-    for ($i = 0; $i < $len; $i++) {
-        $num = (int) $s[$i];
-        $pos = $len - $i - 1;
-        $q = (int) floor($pos / 4);
-        $r = $pos % 4;
-        if ($num === 0) {
-            $zero = true;
-        } else {
-            if ($zero) {
-                $out .= $digit[0];
+
+    // 处理整数部分 - 分段处理（每4位一段）
+    if ($int > 0) {
+        $sections = [];
+        $tempInt = $int;
+        while ($tempInt > 0) {
+            $sections[] = $tempInt % 10000;
+            $tempInt = (int) floor($tempInt / 10000);
+        }
+
+        $sectionCount = count($sections);
+        for ($i = $sectionCount - 1; $i >= 0; $i--) {
+            $section = $sections[$i];
+            if ($section === 0) {
+                continue;
             }
-            $zero = false;
-            $out .= $digit[$num] . $unit1[$r];
+
+            $sectionStr = '';
+            $thousands = (int) floor($section / 1000);
+            $hundreds = (int) floor(($section % 1000) / 100);
+            $tens = (int) floor(($section % 100) / 10);
+            $ones = $section % 10;
+
+            if ($thousands > 0) {
+                $sectionStr .= $digit[$thousands] . '仟';
+            }
+            if ($hundreds > 0) {
+                $sectionStr .= $digit[$hundreds] . '佰';
+            } elseif ($thousands > 0 && ($tens > 0 || $ones > 0)) {
+                $sectionStr .= '零';
+            }
+            if ($tens > 0) {
+                $sectionStr .= $digit[$tens] . '拾';
+            } elseif ($hundreds > 0 && $ones > 0) {
+                $sectionStr .= '零';
+            }
+            if ($ones > 0) {
+                $sectionStr .= $digit[$ones];
+            }
+
+            // 添加段单位
+            if ($i === 1) {
+                $sectionStr .= '万';
+            } elseif ($i === 2) {
+                $sectionStr .= '亿';
+            }
+
+            // 如果前面有内容且当前段不是第一段，需要补零
+            if ($out !== '' && $section < 1000) {
+                $out .= '零';
+            }
+
+            $out .= $sectionStr;
         }
-        if ($r === 0 && !$zero) {
-            $out .= $unit2[$q];
-        }
+
+        $out .= '元';
     }
-    $out .= '元';
+
+    // 处理小数部分
     if ($dec === 0) {
         return $out . '整';
     }
+
     $j = (int) floor($dec / 10);
     $f = $dec % 10;
+
     if ($j > 0) {
         $out .= $digit[$j] . '角';
     }
     if ($f > 0) {
+        if ($j === 0 && $int > 0) {
+            $out .= '零';
+        }
         $out .= $digit[$f] . '分';
     }
+
     return $out;
 }
 
@@ -148,7 +194,7 @@ ob_start();
     <div id="contractInfoPane" class="js-main-pane">
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同编号</label><input class="mf-input" disabled value="<?= e((string) $row['contract_no']) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">项目号</label><input class="mf-input" disabled value="<?= e((string) ($row['project_no'] ?? '-')) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;"><label class="mf-label" style="color:#d48806;font-weight:700;">项目号</label><input class="mf-input" disabled value="<?= e((string) ($row['project_no'] ?? '-')) ?>" style="border-color:#d48806;font-weight:700;font-size:15px;background:#fffbe6;"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同名称</label><input class="mf-input" disabled value="<?= e((string) $row['contract_name']) ?>"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
@@ -158,28 +204,25 @@ ob_start();
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">联系电话</label><input class="mf-input" disabled value="<?= e((string) $row['phone']) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同金额</label><input class="mf-input" disabled value="¥<?= e(number_format((float) $row['amount'], 2)) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;"><label class="mf-label" style="color:#d48806;font-weight:700;">合同金额</label><input class="mf-input" disabled value="¥<?= e(number_format((float) $row['amount'], 2)) ?>" style="border-color:#d48806;font-weight:700;font-size:15px;background:#fffbe6;"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">金额大写</label><input class="mf-input" disabled value="<?= e(money_to_cn((float) $row['amount'])) ?>"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">签订日期</label><input class="mf-input" disabled value="<?= e((string) ($row['signed_date'] ?: '-')) ?>"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">生效日期</label><input class="mf-input" disabled value="<?= e((string) ($row['effective_date'] ?: '-')) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">截止日期</label><input class="mf-input" disabled value="<?= e((string) ($row['expiry_date'] ?: '长期有效')) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;"><label class="mf-label" style="color:#d48806;font-weight:700;">截止日期</label><input class="mf-input" disabled value="<?= e((string) ($row['expiry_date'] ?: '长期有效')) ?>" style="border-color:#d48806;font-weight:700;font-size:15px;background:#fffbe6;"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">款项类型</label><input class="mf-input" disabled value="<?= (string)($row['payment_type'] ?? 'receipt') === 'payment' ? '付款' : '收款' ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">剩余天数</label><input class="mf-input" disabled value="<?= $row['left_days'] === null ? '-' : ((int) $row['left_days'] . ' 天') ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同状态</label><input class="mf-input" disabled value="<?= e(mf_contract_status_label((string) $row['status'])) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同类型</label><input class="mf-input" disabled value="<?= e((string) ($row['type_name'] ?: '-')) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">创建人</label><input class="mf-input" disabled value="<?= e((string) ($row['creator_name'] ?? '-')) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-6" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">剩余天数</label><input class="mf-input" disabled value="<?= $row['left_days'] === null ? '-' : ((int) $row['left_days'] . ' 天') ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-6" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同状态</label><input class="mf-input" disabled value="<?= e(mf_contract_status_label((string) $row['status'])) ?>"></div></div>
     </div>
     <div class="mf-form-item"><label class="mf-label">附件</label>
       <?php if ($files): ?>
-        <?php foreach ($files as $f): $u = url((string) $f['file_path']); $img = strpos((string) $f['mime_type'], 'image/') === 0; $pdf = (string) $f['mime_type'] === 'application/pdf'; ?>
+        <?php foreach ($files as $f): $fileId = (int) $f['id']; $img = strpos((string) $f['mime_type'], 'image/') === 0; $pdf = (string) $f['mime_type'] === 'application/pdf'; $dlUrl = url('api/file-download.php?id=' . $fileId); ?>
           <div class="mf-flex mf-items-center mf-gap-2 mf-mb-1">
             <span><?= e((string) $f['origin_name']) ?></span>
-            <?php if ($img || $pdf): ?><a class="mf-btn mf-btn--default mf-btn--sm" target="_blank" href="<?= e($u) ?>">预览</a><?php endif; ?>
-            <a class="mf-btn mf-btn--default mf-btn--sm" href="<?= e($u) ?>" download>下载</a>
+            <?php if ($img || $pdf): ?><a class="mf-btn mf-btn--default mf-btn--sm" target="_blank" href="<?= e($dlUrl) ?>">预览</a><?php endif; ?>
+            <a class="mf-btn mf-btn--default mf-btn--sm" href="<?= e($dlUrl) ?>" download="<?= e((string) $f['origin_name']) ?>">下载</a>
           </div>
         <?php endforeach; ?>
       <?php else: ?>
