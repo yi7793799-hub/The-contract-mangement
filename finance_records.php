@@ -32,7 +32,7 @@ if ($kw !== '') {
     $params[] = $like;
     $params[] = $like;
 }
-$sql = "SELECT t.*, c.contract_no, c.contract_name, c.amount AS contract_amount,
+$sql = "SELECT t.*, c.contract_no, c.project_no, c.contract_name, c.amount AS contract_amount,
             COALESCE(a.display_name, a.username, '-') AS registrar_name,
             c.amount - COALESCE((
                 SELECT SUM(t2.amount)
@@ -101,16 +101,17 @@ ob_start();
   <div class="mf-panel__header"><?= e($titleMap[$tab]) ?>登记记录</div>
   <div class="mf-table-wrap">
     <table class="mf-table mf-table--striped table-mf mf-mb-0">
-      <thead><tr><th>时间</th><th>合同</th><th>登记人</th><th>合同金额</th><th>本次金额</th><th>登记后剩余金额</th><th>备注</th><th>凭证</th></tr></thead>
+      <thead><tr><th>时间</th><th>合同编号</th><th>项目号</th><th>登记人</th><th>合同金额(万元)</th><th>本次金额(万元)</th><th>登记后剩余金额(万元)</th><th>备注</th><th>凭证</th></tr></thead>
       <tbody>
       <?php foreach ($rows as $r): ?>
         <tr>
           <td><?= e((string) $r['created_at']) ?></td>
-          <td><a href="<?= e(url('contract_view.php?id=' . (int) $r['contract_id'])) ?>"><?= e((string) $r['contract_no'] . ' - ' . $r['contract_name']) ?></a></td>
+          <td><?= e((string) $r['contract_no']) ?></td>
+          <td><?= e((string) ($r['project_no'] ?? '-')) ?></td>
           <td><?= e((string) ($r['registrar_name'] ?? '-')) ?></td>
-          <td>¥<?= number_format((float) $r['contract_amount'], 2) ?></td>
-          <td>¥<?= number_format((float) $r['amount'], 2) ?></td>
-          <td>¥<?= number_format(max(0, (float) $r['remaining_after_tx']), 2) ?></td>
+          <td><?= number_format((float) $r['contract_amount'], 4) ?></td>
+          <td><?= number_format((float) $r['amount'], 4) ?></td>
+          <td><?= number_format(max(0, (float) $r['remaining_after_tx']), 4) ?></td>
           <td><?= e((string) $r['note']) ?></td>
           <td>
             <?php if (!empty($r['voucher_path'])): ?>

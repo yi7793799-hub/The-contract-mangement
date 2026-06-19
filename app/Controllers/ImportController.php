@@ -865,7 +865,7 @@ class ImportController
                                     <th style="width:180px;">合同编号</th>
                                     <th>合同名称</th>
                                     <th style="width:150px;">客户名称</th>
-                                    <th style="width:100px;">金额（万元）</th>
+                                    <th style="width:100px;">金额(万元)</th>
                                     <th style="width:100px;">置信度</th>
                                     <th style="width:160px;">导入时间</th>
                                     <th style="width:80px;">操作</th>
@@ -896,7 +896,7 @@ class ImportController
                                     </td>
                                     <td style="text-align:right;">
                                         <?php if (!empty($c['amount'])): ?>
-                                        <span style="color:#28a745;font-weight:500;"><?= number_format((float)$c['amount'], 2) ?></span>
+                                        <span style="color:#28a745;font-weight:500;"><?= number_format((float)$c['amount'], 4) ?></span>
                                         <?php else: ?>
                                         <span style="color:#999;">-</span>
                                         <?php endif; ?>
@@ -1077,7 +1077,7 @@ class ImportController
                                 </div>
                                 <div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;">
                                     <label class="mf-label" style="color:#d48806;font-weight:700;">合同金额（万元）</label>
-                                    <input type="number" name="amount" class="mf-input" value="<?= e($contract['amount'] ?? 0) ?>" step="0.01" style="border-color:#d48806;font-weight:700;font-size:15px;">
+                                    <input type="number" name="amount" class="mf-input" value="<?= e($contract['amount'] ?? 0) ?>" step="0.0001" style="border-color:#d48806;font-weight:700;font-size:15px;">
                                 </div>
                             </div>
 
@@ -1103,8 +1103,8 @@ class ImportController
                                 <?php else: ?>
                                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                                     <?php foreach ($files as $file): ?>
-                                    <a href="<?= url($file['file_path'] ?? '') ?>" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;background:#ecf5ff;color:#409eff;border-radius:4px;font-size:14px;">
-                                        <i class="bi bi-file-earmark"></i> <?= e($file['origin_name'] ?? $file['file_name']) ?>
+                                    <a href="<?= url('api/file-download.php?id=' . $file['id']) ?>" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;background:#ecf5ff;color:#409eff;border-radius:4px;font-size:14px;text-decoration:none;">
+                                        <i class="bi bi-file-earmark-pdf"></i> <?= e($file['origin_name'] ?? $file['file_name']) ?>
                                     </a>
                                     <?php endforeach; ?>
                                 </div>

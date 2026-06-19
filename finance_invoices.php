@@ -86,7 +86,7 @@ if ($kw !== '') {
     $params[] = $like;
     $params[] = $like;
 }
-$contractsSql = "SELECT c.id, c.contract_no, c.contract_name,
+$contractsSql = "SELECT c.id, c.contract_no, c.project_no, c.contract_name,
                     COALESCE((SELECT SUM(t.amount) FROM contract_transactions t WHERE t.contract_id = c.id AND t.tx_type = ?), 0) AS done_amount,
                     COALESCE((SELECT SUM(i.amount) FROM contract_invoices i WHERE i.contract_id = c.id AND i.invoice_type = ?), 0) AS invoiced_amount,
                     COALESCE((SELECT SUM(t.amount) FROM contract_transactions t WHERE t.contract_id = c.id AND t.tx_type = ?), 0)
@@ -154,18 +154,19 @@ ob_start();
   <div class="mf-panel__header"><?= e($titleMap[$tab]) ?>开票明细</div>
   <div class="mf-table-wrap">
     <table class="mf-table mf-table--striped table-mf mf-mb-0">
-      <thead><tr><th>合同编号</th><th>合同名称</th><th>已登记金额</th><th>已开票金额</th><th>待开票金额</th></tr></thead>
+      <thead><tr><th>合同编号</th><th>项目号</th><th>合同名称</th><th>已登记金额(万元)</th><th>已开票金额(万元)</th><th>待开票金额(万元)</th></tr></thead>
       <tbody>
       <?php foreach ($contracts as $c): ?>
         <tr>
           <td><?= e((string) $c['contract_no']) ?></td>
+          <td><?= e((string) ($c['project_no'] ?? '-')) ?></td>
           <td><?= e((string) $c['contract_name']) ?></td>
-          <td>¥<?= number_format((float) $c['done_amount'], 2) ?></td>
-          <td>¥<?= number_format((float) $c['invoiced_amount'], 2) ?></td>
-          <td>¥<?= number_format(max(0, (float) $c['pending_invoice_amount']), 2) ?></td>
+          <td><?= number_format((float) $c['done_amount'], 4) ?></td>
+          <td><?= number_format((float) $c['invoiced_amount'], 4) ?></td>
+          <td><?= number_format(max(0, (float) $c['pending_invoice_amount']), 4) ?></td>
         </tr>
       <?php endforeach; ?>
-      <?php if (!$contracts): ?><tr><td colspan="5" class="mf-text-center mf-text-muted mf-p-4">暂无数据</td></tr><?php endif; ?>
+      <?php if (!$contracts): ?><tr><td colspan="6" class="mf-text-center mf-text-muted mf-p-4">暂无数据</td></tr><?php endif; ?>
       </tbody>
     </table>
   </div>
@@ -177,13 +178,13 @@ ob_start();
   <div class="mf-panel__header">开票记录</div>
   <div class="mf-table-wrap">
     <table class="mf-table mf-table--striped table-mf mf-mb-0">
-      <thead><tr><th>时间</th><th>合同</th><th>开票金额</th><th>登记人</th><th>备注</th><th>附件</th></tr></thead>
+      <thead><tr><th>时间</th><th>合同</th><th>开票金额(万元)</th><th>登记人</th><th>备注</th><th>附件</th></tr></thead>
       <tbody>
       <?php foreach ($invoiceRows as $r): ?>
         <tr>
           <td><?= e((string) $r['created_at']) ?></td>
           <td><?= e((string) $r['contract_no'] . ' - ' . (string) $r['contract_name']) ?></td>
-          <td>¥<?= number_format((float) $r['amount'], 2) ?></td>
+          <td><?= number_format((float) $r['amount'], 4) ?></td>
           <td><?= e((string) ($r['registrar_name'] ?? '-')) ?></td>
           <td><?= e((string) ($r['note'] ?? '')) ?></td>
           <td><?php if (!empty($r['file_path'])): ?><a class="mf-btn mf-btn--default mf-btn--sm" target="_blank" href="<?= e(url((string) $r['file_path'])) ?>">查看</a><?php else: ?><span class="mf-small mf-text-muted">无</span><?php endif; ?></td>
@@ -212,11 +213,11 @@ ob_start();
               <option value="">请选择合同</option>
               <?php foreach ($contracts as $c): ?>
                 <?php if ((float) $c['pending_invoice_amount'] <= 0.00001) continue; ?>
-                <option value="<?= (int) $c['id'] ?>"><?= e((string) $c['contract_no'] . ' - ' . (string) $c['contract_name']) ?>（待开票 ¥<?= number_format(max(0, (float) $c['pending_invoice_amount']), 2) ?>）</option>
+                <option value="<?= (int) $c['id'] ?>"><?= e((string) $c['contract_no'] . ' - ' . (string) $c['contract_name']) ?>（待开票 <?= number_format(max(0, (float) $c['pending_invoice_amount']), 4) ?> 万元）</option>
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="mf-form-item"><label class="mf-label">开票金额</label><input class="mf-input" type="number" name="amount" min="0.01" step="0.01" required></div>
+          <div class="mf-form-item"><label class="mf-label">开票金额（万元）</label><input class="mf-input" type="number" name="amount" min="0.01" step="0.01" required></div>
           <div class="mf-form-item"><label class="mf-label">备注</label><input class="mf-input" type="text" name="note" maxlength="255"></div>
           <div class="mf-form-item"><label class="mf-label">发票附件</label><input class="mf-input" type="file" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"></div>
         </form>

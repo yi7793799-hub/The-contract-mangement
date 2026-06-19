@@ -267,6 +267,8 @@ function mf_ensure_contract_schema(PDO $pdo): void
     $safeExec("ALTER TABLE contracts ADD COLUMN import_fields TEXT DEFAULT NULL");
     $safeExec("ALTER TABLE contracts ADD COLUMN ocr_raw_text LONGTEXT DEFAULT NULL");
     $safeExec("ALTER TABLE contracts ADD COLUMN import_job_id INT UNSIGNED DEFAULT NULL");
+    $safeExec("ALTER TABLE contracts ADD COLUMN project_no VARCHAR(64) DEFAULT '' AFTER contract_no");
+    $safeExec("ALTER TABLE contracts ADD INDEX idx_project_no (project_no)");
     $safeExec("ALTER TABLE contracts MODIFY COLUMN status ENUM('ongoing','completed','terminated','expiring','pending_review') NOT NULL DEFAULT 'ongoing'");
 
     $safeExec(
@@ -458,13 +460,13 @@ function mf_permission_catalog(): array
     return [
         'dashboard.view' => '首页-查看',
         'search.view' => '快速搜索-查看',
-        'contracts.view' => '合同列表-查看',
-        'contracts.create' => '合同列表-新增',
-        'contracts.edit' => '合同列表-编辑',
-        'contracts.delete' => '合同列表-删除',
-        'contracts.update_status' => '合同列表-更新状态',
-        'contracts.archive' => '合同列表-归档',
-        'contracts.export' => '合同列表-导出',
+        'contracts.view' => '项目列表-查看',
+        'contracts.create' => '项目列表-新增',
+        'contracts.edit' => '项目列表-编辑',
+        'contracts.delete' => '项目列表-删除',
+        'contracts.update_status' => '项目列表-更新状态',
+        'contracts.archive' => '项目列表-归档',
+        'contracts.export' => '项目列表-导出',
         'receipt.progress.view' => '收款业务-查看',
         'receipt.progress.entry' => '收款业务-登记收款',
         'receipt.progress.undo' => '收款业务-撤销上一次',
@@ -539,7 +541,7 @@ function mf_permission_groups(): array
     return [
         'dashboard' => ['label' => '首页', 'permissions' => ['dashboard.view']],
         'search' => ['label' => '快速搜索', 'permissions' => ['search.view']],
-        'contracts' => ['label' => '合同业务（含收付款合同列表/编辑/归档/导出）', 'permissions' => [
+        'contracts' => ['label' => '合同业务（含收付款项目列表/编辑/归档/导出）', 'permissions' => [
             'contracts.view', 'contracts.create', 'contracts.edit', 'contracts.delete',
             'contracts.update_status', 'contracts.archive', 'contracts.export'
         ]],

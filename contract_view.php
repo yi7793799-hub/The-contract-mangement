@@ -85,26 +85,38 @@ $timelineSt = $pdo->prepare(
 $timelineSt->execute([$id, $currentTxType]);
 $timelineRows = $timelineSt->fetchAll() ?: [];
 
+/**
+ * 金额大写转换（支持万元单位）
+ * @param float $n 金额（万元）
+ * @return string 大写金额
+ */
 function money_to_cn(float $n): string
 {
+    // 万元转换为元（乘以10000）
+    $n = $n * 10000;
     $n = round($n, 2);
+
     if ($n <= 0) {
         return '零元整';
     }
+
     $digit = ['零','壹','贰','叁','肆','伍','陆','柒','捌','玖'];
     $unit1 = ['','拾','佰','仟'];
     $unit2 = ['','万','亿','兆'];
+
     $int = (int) floor($n);
     $dec = (int) round(($n - $int) * 100);
     $s = (string) $int;
     $out = '';
     $zero = false;
     $len = strlen($s);
+
     for ($i = 0; $i < $len; $i++) {
         $num = (int) $s[$i];
         $pos = $len - $i - 1;
         $q = (int) floor($pos / 4);
         $r = $pos % 4;
+
         if ($num === 0) {
             $zero = true;
         } else {
@@ -114,22 +126,28 @@ function money_to_cn(float $n): string
             $zero = false;
             $out .= $digit[$num] . $unit1[$r];
         }
+
         if ($r === 0 && !$zero) {
             $out .= $unit2[$q];
         }
     }
+
     $out .= '元';
+
     if ($dec === 0) {
         return $out . '整';
     }
+
     $j = (int) floor($dec / 10);
     $f = $dec % 10;
+
     if ($j > 0) {
         $out .= $digit[$j] . '角';
     }
     if ($f > 0) {
         $out .= $digit[$f] . '分';
     }
+
     return $out;
 }
 
@@ -148,17 +166,18 @@ ob_start();
     <div id="contractInfoPane" class="js-main-pane">
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同编号</label><input class="mf-input" disabled value="<?= e((string) $row['contract_no']) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">项目号</label><input class="mf-input" disabled value="<?= e((string) ($row['project_no'] ?? '-')) ?>"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同名称</label><input class="mf-input" disabled value="<?= e((string) $row['contract_name']) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">客户名称</label><input class="mf-input" disabled value="<?= e((string) $row['customer_name']) ?>"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">客户名称</label><input class="mf-input" disabled value="<?= e((string) $row['customer_name']) ?>"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">签约方</label><input class="mf-input" disabled value="<?= e((string) $row['signer_party']) ?>"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">签约人</label><input class="mf-input" disabled value="<?= e((string) $row['signer_name']) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">联系电话</label><input class="mf-input" disabled value="<?= e((string) $row['phone']) ?>"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同金额</label><input class="mf-input" disabled value="¥<?= e(number_format((float) $row['amount'], 2)) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-8" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">金额大写</label><input class="mf-input" disabled value="<?= e(money_to_cn((float) $row['amount'])) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">联系电话</label><input class="mf-input" disabled value="<?= e((string) $row['phone']) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同金额（万元）</label><input class="mf-input" disabled value="<?= e(number_format((float) $row['amount'], 4)) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">金额大写</label><input class="mf-input" disabled value="<?= e(money_to_cn((float) $row['amount'])) ?>"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">签订日期</label><input class="mf-input" disabled value="<?= e((string) ($row['signed_date'] ?: '-')) ?>"></div></div>
@@ -166,15 +185,12 @@ ob_start();
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">截止日期</label><input class="mf-input" disabled value="<?= e((string) ($row['expiry_date'] ?: '长期有效')) ?>"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">款项类型</label><input class="mf-input" disabled value="<?= (string)($row['payment_type'] ?? 'receipt') === 'payment' ? '付款' : '收款' ?>"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">剩余天数</label><input class="mf-input" disabled value="<?= $row['left_days'] === null ? '-' : ((int) $row['left_days'] . ' 天') ?>"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同状态</label><input class="mf-input" disabled value="<?= e(mf_contract_status_label((string) $row['status'])) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同类型</label><input class="mf-input" disabled value="<?= e((string) ($row['type_name'] ?: '-')) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">创建人</label><input class="mf-input" disabled value="<?= e((string) ($row['creator_name'] ?? '-')) ?>"></div></div>
     </div>
     <div class="mf-form-item"><label class="mf-label">附件</label>
       <?php if ($files): ?>
-        <?php foreach ($files as $f): $u = url((string) $f['file_path']); $img = strpos((string) $f['mime_type'], 'image/') === 0; $pdf = (string) $f['mime_type'] === 'application/pdf'; ?>
+        <?php foreach ($files as $f): $u = url('api/file-download.php?id=' . (int) $f['id']); $img = strpos((string) $f['mime_type'], 'image/') === 0; $pdf = (string) $f['mime_type'] === 'application/pdf'; ?>
           <div class="mf-flex mf-items-center mf-gap-2 mf-mb-1">
             <span><?= e((string) $f['origin_name']) ?></span>
             <?php if ($img || $pdf): ?><a class="mf-btn mf-btn--default mf-btn--sm" target="_blank" href="<?= e($u) ?>">预览</a><?php endif; ?>
@@ -193,19 +209,19 @@ ob_start();
           <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
             <div class="mf-col mf-col-12 mf-col-md-3" style="padding-left:6px;padding-right:6px;">
               <div class="mf-small mf-text-muted">合同金额</div>
-              <div style="font-size:15px;color:#303133;">¥<?= number_format($totalAmount, 2) ?></div>
+              <div style="font-size:15px;color:#303133;"><?= number_format($totalAmount, 4) ?> 万元</div>
             </div>
             <div class="mf-col mf-col-12 mf-col-md-3" style="padding-left:6px;padding-right:6px;">
               <div class="mf-small mf-text-muted">已<?= e($currentTxLabel) ?>金额</div>
-              <div style="font-size:15px;color:#303133;">¥<?= number_format($currentDone, 2) ?></div>
+              <div style="font-size:15px;color:#303133;"><?= number_format($currentDone, 4) ?> 万元</div>
             </div>
             <div class="mf-col mf-col-12 mf-col-md-3" style="padding-left:6px;padding-right:6px;">
               <div class="mf-small mf-text-muted">待<?= e($currentTxLabel) ?>金额</div>
-              <div style="font-size:15px;color:#303133;">¥<?= number_format($currentLeft, 2) ?></div>
+              <div style="font-size:15px;color:#303133;"><?= number_format($currentLeft, 4) ?> 万元</div>
             </div>
             <div class="mf-col mf-col-12 mf-col-md-3" style="padding-left:6px;padding-right:6px;">
               <div class="mf-small mf-text-muted">完成率</div>
-              <div style="font-size:15px;color:#303133;"><?= number_format($currentPct, 2) ?>%</div>
+              <div style="font-size:15px;color:#303133;"><?= number_format($currentPct, 4) ?>%</div>
             </div>
           </div>
         </div>
@@ -213,19 +229,19 @@ ob_start();
           <div class="mf-col mf-col-12" style="padding-left:6px;padding-right:6px;">
             <?php if ($paymentType === 'payment'): ?>
               <div class="mf-form-item">
-                <label class="mf-label">付款进度（已付 ¥<?= number_format($paymentDone, 2) ?> / 合同 ¥<?= number_format($totalAmount, 2) ?>）</label>
+                <label class="mf-label">付款进度（已付 <?= number_format($paymentDone, 4) ?> 万元 / 合同 <?= number_format($totalAmount, 4) ?> 万元）</label>
                 <div style="height:10px;background:#ebeef5;overflow:hidden;">
-                  <div style="height:10px;width:<?= number_format($paymentPct, 2, '.', '') ?>%;background:#e6a23c;"></div>
+                  <div style="height:10px;width:<?= number_format($paymentPct, 4, '.', '') ?>%;background:#e6a23c;"></div>
                 </div>
-                <div class="mf-small mf-text-muted"><?= number_format($paymentPct, 2) ?>%</div>
+                <div class="mf-small mf-text-muted"><?= number_format($paymentPct, 4) ?>%</div>
               </div>
             <?php else: ?>
               <div class="mf-form-item">
-                <label class="mf-label">收款进度（已收 ¥<?= number_format($receiptDone, 2) ?> / 合同 ¥<?= number_format($totalAmount, 2) ?>）</label>
+                <label class="mf-label">收款进度（已收 <?= number_format($receiptDone, 4) ?> 万元 / 合同 <?= number_format($totalAmount, 4) ?> 万元）</label>
                 <div style="height:10px;background:#ebeef5;overflow:hidden;">
-                  <div style="height:10px;width:<?= number_format($receiptPct, 2, '.', '') ?>%;background:#67c23a;"></div>
+                  <div style="height:10px;width:<?= number_format($receiptPct, 4, '.', '') ?>%;background:#67c23a;"></div>
                 </div>
-                <div class="mf-small mf-text-muted"><?= number_format($receiptPct, 2) ?>%</div>
+                <div class="mf-small mf-text-muted"><?= number_format($receiptPct, 4) ?>%</div>
               </div>
             <?php endif; ?>
           </div>
@@ -238,7 +254,7 @@ ob_start();
                 <div style="position:relative;padding:0 0 14px 0;">
                   <span style="position:absolute;left:-20px;top:3px;width:8px;height:8px;border-radius:50%;background:#409eff;display:block;"></span>
                   <div class="mf-small" style="color:#909399;"><?= e((string) $tr['created_at']) ?></div>
-                  <div style="font-size:13px;color:#303133;"><?= e($currentTxLabel) ?>金额：¥<?= number_format((float) $tr['amount'], 2) ?></div>
+                  <div style="font-size:13px;color:#303133;"><?= e($currentTxLabel) ?>金额：<?= number_format((float) $tr['amount'], 4) ?> 万元</div>
                   <div class="mf-small mf-text-muted">登记人：<?= e((string) ($tr['registrar_name'] ?? '-')) ?></div>
                   <div class="mf-small mf-text-muted">备注：<?= e((string) ($tr['note'] ?: '-')) ?></div>
                 </div>
@@ -256,28 +272,28 @@ ob_start();
         <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
           <div class="mf-col mf-col-12 mf-col-md-3" style="padding-left:6px;padding-right:6px;">
             <div class="mf-small mf-text-muted">可开票金额</div>
-            <div style="font-size:15px;color:#303133;">¥<?= number_format($currentDone, 2) ?></div>
+            <div style="font-size:15px;color:#303133;">¥<?= number_format($currentDone, 4) ?></div>
           </div>
           <div class="mf-col mf-col-12 mf-col-md-3" style="padding-left:6px;padding-right:6px;">
             <div class="mf-small mf-text-muted">已开票金额</div>
-            <div style="font-size:15px;color:#303133;">¥<?= number_format($invoiceDone, 2) ?></div>
+            <div style="font-size:15px;color:#303133;"><?= number_format($invoiceDone, 4) ?> 万元</div>
           </div>
           <div class="mf-col mf-col-12 mf-col-md-3" style="padding-left:6px;padding-right:6px;">
             <div class="mf-small mf-text-muted">待开票金额</div>
-            <div style="font-size:15px;color:#303133;">¥<?= number_format($invoiceLeft, 2) ?></div>
+            <div style="font-size:15px;color:#303133;"><?= number_format($invoiceLeft, 4) ?> 万元</div>
           </div>
           <div class="mf-col mf-col-12 mf-col-md-3" style="padding-left:6px;padding-right:6px;">
             <div class="mf-small mf-text-muted">开票率</div>
-            <div style="font-size:15px;color:#303133;"><?= number_format($invoicePct, 2) ?>%</div>
+            <div style="font-size:15px;color:#303133;"><?= number_format($invoicePct, 4) ?>%</div>
           </div>
         </div>
       </div>
       <div class="mf-form-item">
-        <label class="mf-label"><?= e($currentTxLabel) ?>开票进度（已开 ¥<?= number_format($invoiceDone, 2) ?> / 可开 ¥<?= number_format($currentDone, 2) ?>）</label>
+        <label class="mf-label"><?= e($currentTxLabel) ?>开票进度（已开 <?= number_format($invoiceDone, 4) ?> 万元 / 可开 <?= number_format($currentDone, 4) ?> 万元）</label>
         <div style="height:10px;background:#ebeef5;overflow:hidden;">
           <div style="height:10px;width:<?= number_format($invoicePct, 2, '.', '') ?>%;background:#409eff;"></div>
         </div>
-        <div class="mf-small mf-text-muted"><?= number_format($invoicePct, 2) ?>%</div>
+        <div class="mf-small mf-text-muted"><?= number_format($invoicePct, 4) ?>%</div>
       </div>
       <div class="mf-form-item">
         <label class="mf-label"><?= e($currentTxLabel) ?>开票记录（时间线）</label>
@@ -287,7 +303,7 @@ ob_start();
               <div style="position:relative;padding:0 0 14px 0;">
                 <span style="position:absolute;left:-20px;top:3px;width:8px;height:8px;border-radius:50%;background:#409eff;display:block;"></span>
                 <div class="mf-small" style="color:#909399;"><?= e((string) $iv['created_at']) ?></div>
-                <div style="font-size:13px;color:#303133;">开票金额：¥<?= number_format((float) $iv['amount'], 2) ?></div>
+                <div style="font-size:13px;color:#303133;">开票金额：<?= number_format((float) $iv['amount'], 4) ?> 万元</div>
                 <div class="mf-small mf-text-muted">登记人：<?= e((string) ($iv['registrar_name'] ?? '-')) ?></div>
                 <div class="mf-small mf-text-muted">备注：<?= e((string) ($iv['note'] ?: '-')) ?></div>
                 <?php if ((string) ($iv['file_path'] ?? '') !== ''): ?>

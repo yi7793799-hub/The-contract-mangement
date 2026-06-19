@@ -172,7 +172,7 @@ if ((string) ($_GET['export'] ?? '') === '1') {
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="' . rawurlencode($filename) . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
     echo "\xEF\xBB\xBF";
-    echo "\"合同编号\",\"合同名称\",\"创建人\",\"合同总额\",\"已登记金额\",\"剩余金额\",\"进度(%)\",\"状态\"\r\n";
+    echo "\"合同编号\",\"项目号\",\"合同名称\",\"创建人\",\"合同总额(万元)\",\"已登记金额(万元)\",\"剩余金额(万元)\",\"进度(%)\",\"状态\"\r\n";
     foreach ($contracts as $c) {
         $total = (float) $c['amount'];
         $done = (float) $c['done_amount'];
@@ -180,12 +180,13 @@ if ((string) ($_GET['export'] ?? '') === '1') {
         $percent = $total > 0 ? min(100, ($done / $total) * 100) : 0;
         $line = [
             (string) $c['contract_no'],
+            (string) ($c['project_no'] ?? '-'),
             (string) $c['contract_name'],
             (string) ($c['creator_name'] ?? '-'),
-            number_format($total, 2, '.', ''),
-            number_format($done, 2, '.', ''),
-            number_format($remaining, 2, '.', ''),
-            number_format($percent, 2, '.', ''),
+            number_format($total, 4, '.', ''),
+            number_format($done, 4, '.', ''),
+            number_format($remaining, 4, '.', ''),
+            number_format($percent, 4, '.', ''),
             mf_contract_status_label((string) $c['status']),
         ];
         $escaped = array_map(static function ($v): string {
@@ -220,7 +221,7 @@ ob_start();
   <div class="mf-panel__header"><?= e($titleMap[$tab]) ?>合同进度</div>
   <div class="mf-table-wrap">
     <table class="mf-table mf-table--striped table-mf mf-mb-0">
-      <thead><tr><th>合同编号</th><th>合同名称</th><th>创建人</th><th>合同总额</th><th>已登记<?= e($titleMap[$tab]) ?></th><th>剩余金额</th><th>进度</th><th>状态</th><th>操作</th></tr></thead>
+      <thead><tr><th>合同编号</th><th>项目号</th><th>合同名称</th><th>创建人</th><th>合同总额(万元)</th><th>已登记<?= e($titleMap[$tab]) ?>(万元)</th><th>剩余金额(万元)</th><th>进度</th><th>状态</th><th>操作</th></tr></thead>
       <tbody>
       <?php foreach ($contracts as $c): ?>
         <?php
@@ -231,16 +232,17 @@ ob_start();
         ?>
         <tr>
           <td><?= e((string) $c['contract_no']) ?></td>
+          <td><?= e((string) ($c['project_no'] ?? '-')) ?></td>
           <td><a href="<?= e(url('contract_view.php?id=' . (int) $c['id'])) ?>"><?= e((string) $c['contract_name']) ?></a></td>
           <td><?= e((string) ($c['creator_name'] ?? '-')) ?></td>
-          <td>¥<?= number_format($total, 2) ?></td>
-          <td>¥<?= number_format($done, 2) ?></td>
-          <td>¥<?= number_format($remaining, 2) ?></td>
+          <td><?= number_format($total, 4) ?></td>
+          <td><?= number_format($done, 4) ?></td>
+          <td><?= number_format($remaining, 4) ?></td>
           <td style="min-width:220px;">
             <div style="height:10px;background:#ebeef5;overflow:hidden;">
               <div style="height:10px;width:<?= number_format($percent, 2, '.', '') ?>%;background:<?= $tab === 'receipt' ? '#67c23a' : '#e6a23c' ?>;"></div>
             </div>
-            <div class="mf-small mf-text-muted"><?= number_format($percent, 2) ?>%</div>
+            <div class="mf-small mf-text-muted"><?= number_format($percent, 4) ?>%</div>
           </td>
           <td><?= mf_contract_status_badge((string) $c['status']) ?></td>
           <td>
@@ -263,7 +265,7 @@ ob_start();
         </tr>
       <?php endforeach; ?>
       <?php if (!$contracts): ?>
-        <tr><td colspan="9" class="mf-text-center mf-text-muted mf-p-4">暂无合同</td></tr>
+        <tr><td colspan="10" class="mf-text-center mf-text-muted mf-p-4">暂无合同</td></tr>
       <?php endif; ?>
       </tbody>
     </table>
@@ -290,7 +292,7 @@ ob_start();
               <input class="mf-input" id="financeContractLabel" type="text" value="" placeholder="请从列表点击登记按钮" disabled>
             </div>
             <div class="mf-col mf-col-12 mf-col-md-4">
-              <label class="mf-label">金额</label>
+              <label class="mf-label">金额（万元）</label>
               <input class="mf-input" type="number" min="0.01" step="0.01" name="amount" required>
             </div>
             <div class="mf-col mf-col-12 mf-col-md-8">

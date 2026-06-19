@@ -259,14 +259,15 @@ ob_start();
       <thead>
       <tr>
         <th>合同编号</th>
+        <th>项目号</th>
         <th>合同名称</th>
         <?php if ($biz === ''): ?><th>类型</th><?php endif; ?>
         <?php if ($biz === ''): ?><th>款项类型</th><?php endif; ?>
         <th>签约方</th>
-        <th>合同金额</th>
-        <th>已登记金额</th>
-        <th>已开票金额</th>
-        <th>待开票金额</th>
+        <th>合同金额(万元)</th>
+        <th>已登记金额(万元)</th>
+        <th>已开票金额(万元)</th>
+        <th>待开票金额(万元)</th>
         <th>截止日期</th>
         <th>剩余天数</th>
         <th>状态</th>
@@ -278,6 +279,7 @@ ob_start();
       <?php foreach ($rows as $r): ?>
         <tr>
           <td><?= e((string) $r['contract_no']) ?></td>
+          <td><?= e((string) ($r['project_no'] ?? '-')) ?></td>
           <td>
             <a
               href="<?= e(url('contract_view.php?id=' . (int) $r['id'] . ($biz !== '' ? '&biz=' . rawurlencode($biz) : ''))) ?>"
@@ -288,10 +290,10 @@ ob_start();
           <?php if ($biz === ''): ?><td><?= e((string) ($r['type_name'] ?: '-')) ?></td><?php endif; ?>
           <?php if ($biz === ''): ?><td><?= mf_payment_type_badge((string) ($r['payment_type'] ?? 'receipt')) ?></td><?php endif; ?>
           <td><?= e((string) $r['signer_party']) ?></td>
-          <td>¥<?= number_format((float) $r['amount'], 2) ?></td>
-          <td>¥<?= number_format((float) $r['done_amount'], 2) ?></td>
-          <td>¥<?= number_format((float) ($r['invoiced_amount'] ?? 0), 2) ?></td>
-          <td>¥<?= number_format(max(0, (float) $r['done_amount'] - (float) ($r['invoiced_amount'] ?? 0)), 2) ?></td>
+          <td><?= number_format((float) $r['amount'], 4) ?></td>
+          <td><?= number_format((float) $r['done_amount'], 4) ?></td>
+          <td><?= number_format((float) ($r['invoiced_amount'] ?? 0), 4) ?></td>
+          <td><?= number_format(max(0, (float) $r['done_amount'] - (float) ($r['invoiced_amount'] ?? 0)), 4) ?></td>
           <td><?= e((string) ($r['expiry_date'] ?: '-')) ?></td>
           <td><?php if ((string) $r['status'] === 'completed' || $r['left_days'] === null): ?>-<?php else: ?><?= (int) $r['left_days'] ?> 天<?php endif; ?></td>
           <td><?= mf_contract_status_badge((string) ($r['display_status'] ?? $r['status'])) ?></td>

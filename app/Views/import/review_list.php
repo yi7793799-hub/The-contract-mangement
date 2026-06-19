@@ -37,7 +37,7 @@
                             <th>合同编号</th>
                             <th>合同名称</th>
                             <th>客户名称</th>
-                            <th>金额</th>
+                            <th>金额(万元)</th>
                             <th>置信度</th>
                             <th>导入时间</th>
                             <th>操作</th>
@@ -50,7 +50,7 @@
                             <td><?= e($c['contract_no']) ?></td>
                             <td><?= e($c['contract_name']) ?></td>
                             <td><?= e($c['customer_name']) ?></td>
-                            <td><?= number_format($c['amount'], 2) ?></td>
+                            <td><?= number_format($c['amount'], 4) ?></td>
                             <td>
                                 <?php
                                 $conf = (float) ($c['import_confidence'] ?? 0);
