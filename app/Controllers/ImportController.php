@@ -865,7 +865,7 @@ class ImportController
                                     <th style="width:180px;">合同编号</th>
                                     <th>合同名称</th>
                                     <th style="width:150px;">客户名称</th>
-                                    <th style="width:100px;">金额</th>
+                                    <th style="width:100px;">金额（万元）</th>
                                     <th style="width:100px;">置信度</th>
                                     <th style="width:160px;">导入时间</th>
                                     <th style="width:80px;">操作</th>
@@ -896,7 +896,7 @@ class ImportController
                                     </td>
                                     <td style="text-align:right;">
                                         <?php if (!empty($c['amount'])): ?>
-                                        <span style="color:#28a745;font-weight:500;">¥<?= number_format((float)$c['amount'], 2) ?></span>
+                                        <span style="color:#28a745;font-weight:500;"><?= number_format((float)$c['amount'], 2) ?></span>
                                         <?php else: ?>
                                         <span style="color:#999;">-</span>
                                         <?php endif; ?>
@@ -1022,19 +1022,21 @@ class ImportController
 
         ob_start();
         ?>
-        <div class="mf-panel">
-            <div class="mf-panel__header">
-                <h3>合同审核详情</h3>
-                <div class="mf-panel__actions">
-                    <a href="<?= url('import/review.php' . $bizQuery) ?>" class="mf-btn mf-btn--default">
-                        <i class="bi bi-arrow-left"></i> 返回列表
-                    </a>
-                </div>
-            </div>
-            <div class="mf-panel__body">
-                <div class="mf-row">
-                    <div class="mf-col-md-6">
-                        <h4>合同信息（可编辑）</h4>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 12px 0;">
+            <a href="<?= url('import/review.php' . $bizQuery) ?>" class="mf-btn mf-btn--default mf-btn--sm">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+            <h3 style="margin:0;font-size:18px;color:#303133;">合同审核详情</h3>
+            <div style="width:90px;"></div>
+        </div>
+
+        <div style="display:flex;gap:16px;height:calc(100vh - 130px);">
+            <div style="flex:1;min-width:0;display:flex;">
+                <div class="mf-panel" style="width:100%;display:flex;flex-direction:column;">
+                    <div class="mf-panel__header" style="background:#409eff;color:#fff;">
+                        <i class="bi bi-pencil-square"></i> 合同信息
+                    </div>
+                    <div class="mf-panel__body" style="flex:1;overflow:auto;padding:24px;">
                         <form id="editForm" method="post" action="<?= url('import/update.do.php') ?>">
                             <input type="hidden" name="id" value="<?= $id ?>">
                             <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
@@ -1042,152 +1044,107 @@ class ImportController
                             <input type="hidden" name="biz" value="<?= e($biz) ?>">
                             <?php endif; ?>
 
-                            <div class="mf-form-item">
-                                <label class="mf-label">合同编号</label>
-                                <input type="text" name="contract_no" class="mf-input" value="<?= e($contract['contract_no'] ?? '') ?>">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                <div class="mf-form-item">
+                                    <label class="mf-label">合同编号</label>
+                                    <input type="text" name="contract_no" class="mf-input" value="<?= e($contract['contract_no'] ?? '') ?>">
+                                </div>
+                                <div class="mf-form-item">
+                                    <label class="mf-label">合同名称 <span class="mf-text-danger">*</span></label>
+                                    <input type="text" name="contract_name" class="mf-input" value="<?= e($contract['contract_name'] ?? '') ?>" required>
+                                </div>
                             </div>
 
-                            <div class="mf-form-item">
-                                <label class="mf-label">合同名称 <span class="mf-text-danger">*</span></label>
-                                <input type="text" name="contract_name" class="mf-input" value="<?= e($contract['contract_name'] ?? '') ?>" required>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                <div class="mf-form-item">
+                                    <label class="mf-label">客户名称 <span class="mf-text-danger">*</span></label>
+                                    <input type="text" name="customer_name" class="mf-input" value="<?= e($contract['customer_name'] ?? '') ?>" required>
+                                </div>
+                                <div class="mf-form-item">
+                                    <label class="mf-label">签约方</label>
+                                    <input type="text" name="signer_party" class="mf-input" value="<?= e($contract['signer_party'] ?? '') ?>">
+                                </div>
                             </div>
 
-                            <div class="mf-form-item">
-                                <label class="mf-label">客户名称 <span class="mf-text-danger">*</span></label>
-                                <input type="text" name="customer_name" class="mf-input" value="<?= e($contract['customer_name'] ?? '') ?>" required>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                                <div class="mf-form-item">
+                                    <label class="mf-label">签约人</label>
+                                    <input type="text" name="signer_name" class="mf-input" value="<?= e($contract['signer_name'] ?? '') ?>">
+                                </div>
+                                <div class="mf-form-item">
+                                    <label class="mf-label">联系电话</label>
+                                    <input type="text" name="phone" class="mf-input" value="<?= e($contract['phone'] ?? '') ?>">
+                                </div>
+                                <div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;">
+                                    <label class="mf-label" style="color:#d48806;font-weight:700;">合同金额（万元）</label>
+                                    <input type="number" name="amount" class="mf-input" value="<?= e($contract['amount'] ?? 0) ?>" step="0.01" style="border-color:#d48806;font-weight:700;font-size:15px;">
+                                </div>
                             </div>
 
-                            <div class="mf-form-item">
-                                <label class="mf-label">签约方</label>
-                                <input type="text" name="signer_party" class="mf-input" value="<?= e($contract['signer_party'] ?? '') ?>">
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                                <div class="mf-form-item">
+                                    <label class="mf-label">签订日期</label>
+                                    <input type="date" name="signed_date" class="mf-input" value="<?= e($contract['signed_date'] ?? '') ?>">
+                                </div>
+                                <div class="mf-form-item">
+                                    <label class="mf-label">生效日期</label>
+                                    <input type="date" name="effective_date" class="mf-input" value="<?= e($contract['effective_date'] ?? '') ?>">
+                                </div>
+                                <div class="mf-form-item">
+                                    <label class="mf-label">截止日期</label>
+                                    <input type="date" name="expiry_date" class="mf-input" value="<?= e($contract['expiry_date'] ?? '') ?>">
+                                </div>
                             </div>
 
-                            <div class="mf-form-item">
-                                <label class="mf-label">签约人</label>
-                                <input type="text" name="signer_name" class="mf-input" value="<?= e($contract['signer_name'] ?? '') ?>">
-                            </div>
-
-                            <div class="mf-form-item">
-                                <label class="mf-label">联系电话</label>
-                                <input type="text" name="phone" class="mf-input" value="<?= e($contract['phone'] ?? '') ?>">
-                            </div>
-
-                            <div class="mf-form-item">
-                                <label class="mf-label">合同金额</label>
-                                <input type="number" name="amount" class="mf-input" value="<?= e($contract['amount'] ?? 0) ?>" step="0.01">
-                            </div>
-
-                            <div class="mf-form-item">
-                                <label class="mf-label">签订日期</label>
-                                <input type="date" name="signed_date" class="mf-input" value="<?= e($contract['signed_date'] ?? '') ?>">
-                            </div>
-
-                            <div class="mf-form-item">
-                                <label class="mf-label">生效日期</label>
-                                <input type="date" name="effective_date" class="mf-input" value="<?= e($contract['effective_date'] ?? '') ?>">
-                            </div>
-
-                            <div class="mf-form-item">
-                                <label class="mf-label">截止日期</label>
-                                <input type="date" name="expiry_date" class="mf-input" value="<?= e($contract['expiry_date'] ?? '') ?>">
-                            </div>
-
-                            <div class="mf-form-item">
-                                <label class="mf-label">合同类型</label>
-                                <select name="type_id" class="mf-input">
-                                    <option value="">-- 请选择 --</option>
-                                    <?php foreach ($types as $t): ?>
-                                    <option value="<?= e($t['id']) ?>" <?= ($contract['type_id'] ?? '') == $t['id'] ? 'selected' : '' ?>>
-                                        <?= e($t['name']) ?>
-                                    </option>
+                            <div class="mf-form-item" style="margin-top:16px;">
+                                <label class="mf-label">附件文件</label>
+                                <?php if (empty($files)): ?>
+                                <span class="mf-text-muted">无附件</span>
+                                <?php else: ?>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                    <?php foreach ($files as $file): ?>
+                                    <a href="<?= url($file['file_path'] ?? '') ?>" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;background:#ecf5ff;color:#409eff;border-radius:4px;font-size:14px;">
+                                        <i class="bi bi-file-earmark"></i> <?= e($file['origin_name'] ?? $file['file_name']) ?>
+                                    </a>
                                     <?php endforeach; ?>
-                                </select>
+                                </div>
+                                <?php endif; ?>
                             </div>
 
-                            <div class="mf-form-item">
-                                <label class="mf-label">款项类型</label>
-                                <select name="payment_type" class="mf-input">
-                                    <option value="receipt" <?= ($contract['payment_type'] ?? 'receipt') === 'receipt' ? 'selected' : '' ?>>收款</option>
-                                    <option value="payment" <?= ($contract['payment_type'] ?? '') === 'payment' ? 'selected' : '' ?>>付款</option>
-                                </select>
-                            </div>
+                            <hr style="border:none;border-top:1px solid #ebeef5;margin:24px 0;">
 
-                            <div class="mf-flex mf-gap-2 mf-mt-3">
-                                <button type="submit" class="mf-btn mf-btn--primary">
+                            <div style="display:flex;gap:12px;">
+                                <button type="submit" class="mf-btn mf-btn--primary" style="flex:1;">
                                     <i class="bi bi-save"></i> 保存修改
                                 </button>
-                                <a href="<?= url('import/approve/do.php?id=' . $id) ?>" class="mf-btn mf-btn--success" onclick="return confirm('保存并审核通过？')">
-                                    <i class="bi bi-check-lg"></i> 保存并通过
+                                <a href="<?= url('import/approve/do.php?id=' . $id) ?>" class="mf-btn mf-btn--success" style="flex:1;" onclick="return confirm('保存并审核通过？')">
+                                    <i class="bi bi-check-circle"></i> 审核通过
+                                </a>
+                                <a href="<?= url('import/reject/do.php?id=' . $id) ?>" class="mf-btn mf-btn--danger" onclick="return confirm('确定驳回删除？')">
+                                    <i class="bi bi-x-circle"></i> 驳回
                                 </a>
                             </div>
                         </form>
                     </div>
-                    <div class="mf-col-md-6">
-                        <h4>OCR 识别结果</h4>
-                        <?php if (!empty($fields)): ?>
-                        <table class="mf-table mf-table--sm">
-                            <thead>
-                                <tr>
-                                    <th>字段</th>
-                                    <th>置信度</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($fields as $name => $conf): ?>
-                                <?php if (is_numeric($conf)): ?>
-                                <tr>
-                                    <td><?= e($name) ?></td>
-                                    <td>
-                                        <?php
-                                        $confVal = (float) $conf;
-                                        $badgeClass = $confVal >= 85 ? 'mf-badge--success' : ($confVal >= 60 ? 'mf-badge--warning' : 'mf-badge--danger');
-                                        ?>
-                                        <span class="mf-badge <?= $badgeClass ?>"><?= number_format($confVal, 0) ?>%</span>
-                                    </td>
-                                </tr>
-                                <?php endif; ?>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                        <?php else: ?>
-                        <p class="mf-text-muted">无置信度数据</p>
-                        <?php endif; ?>
+                </div>
+            </div>
 
-                        <h4 class="mf-mt-3">原始OCR文本</h4>
-                        <div style="background:#f5f5f5;padding:12px;border-radius:4px;max-height:250px;overflow:auto;font-size:12px;">
-                            <pre style="white-space:pre-wrap;word-break:break-all;margin:0;"><?= e($ocrText) ?></pre>
-                        </div>
-
-                        <h4 class="mf-mt-3">附件文件</h4>
-                        <?php if (empty($files)): ?>
-                        <p class="mf-text-muted">无附件</p>
-                        <?php else: ?>
-                        <ul class="mf-list">
-                            <?php foreach ($files as $file): ?>
-                            <li>
-                                <i class="bi bi-file-earmark-pdf"></i>
-                                <?= e($file['origin_name'] ?? $file['file_name']) ?>
-                            </li>
-                            <?php endforeach; ?>
-                        </ul>
-                        <?php endif; ?>
-
-                        <div class="mf-mt-3">
-                            <a href="<?= url('import/reject/do.php?id=' . $id) ?>" class="mf-btn mf-btn--danger" onclick="return confirm('确定要驳回删除此合同吗？');">
-                                <i class="bi bi-x-lg"></i> 驳回删除
-                            </a>
-                        </div>
+            <div style="width:550px;flex-shrink:0;">
+                <div class="mf-panel" style="height:100%;display:flex;flex-direction:column;">
+                    <div class="mf-panel__header" style="background:#67c23a;color:#fff;">
+                        <i class="bi bi-file-text"></i> OCR识别文本
+                    </div>
+                    <div class="mf-panel__body" style="flex:1;overflow-y:auto;padding:0;">
+                        <pre style="white-space:pre-wrap;word-break:break-word;margin:0;font-family:Consolas,monospace;font-size:14px;line-height:1.7;color:#303133;background:#fafafa;padding:16px;display:block;"><?= e($ocrText ?: '无OCR识别文本') ?></pre>
                     </div>
                 </div>
             </div>
         </div>
 
         <script>
-        // 保存并通过：先保存再通过
         document.querySelector('a[href*="approve/do"]').addEventListener('click', function(e) {
             e.preventDefault();
             var form = document.getElementById('editForm');
-            var href = this.href;
             form.action = '<?= url('import/update-approve.do.php') ?>';
             form.submit();
         });
