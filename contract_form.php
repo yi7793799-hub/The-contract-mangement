@@ -15,6 +15,7 @@ $id = (int) ($_GET['id'] ?? 0);
 $isEdit = $id > 0;
 $row = [
     'contract_no' => '',
+    'project_no' => '',
     'contract_name' => '',
     'customer_name' => '',
     'payment_type' => 'receipt',
@@ -107,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $longTerm = (string) ($_POST['long_term'] ?? '') === '1';
     $vals = [
         trim((string) ($_POST['contract_no'] ?? '')),
+        trim((string) ($_POST['project_no'] ?? '')),
         trim((string) ($_POST['contract_name'] ?? '')),
         trim((string) ($_POST['customer_name'] ?? '')),
         (string) ($_POST['payment_type'] ?? 'receipt'),
@@ -120,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         (string) ($_POST['status'] ?? 'ongoing'),
         $typeId > 0 ? $typeId : null,
     ];
-    if ($vals[0] === '' || $vals[1] === '') {
+    if ($vals[0] === '' || $vals[2] === '') {
         redirect('contract_form.php' . ($id > 0 ? '?id=' . $id . '&err=' : '?err=') . rawurlencode('合同编号和合同名称不能为空'));
     }
     if (!in_array($vals[3], ['receipt', 'payment'], true)) {
@@ -136,10 +138,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $oldPaymentType = (string) ($oldPaymentTypeSt->fetchColumn() ?: 'receipt');
             $vals[3] = in_array($oldPaymentType, ['receipt', 'payment'], true) ? $oldPaymentType : 'receipt';
         }
-        $pdo->prepare('UPDATE contracts SET contract_no=?,contract_name=?,customer_name=?,payment_type=?,signer_party=?,signer_name=?,phone=?,amount=?,signed_date=?,effective_date=?,expiry_date=?,status=?,type_id=? WHERE id=?')
+        $pdo->prepare('UPDATE contracts SET contract_no=?,project_no=?,contract_name=?,customer_name=?,payment_type=?,signer_party=?,signer_name=?,phone=?,amount=?,signed_date=?,effective_date=?,expiry_date=?,status=?,type_id=? WHERE id=?')
             ->execute(array_merge($vals, [$id]));
     } else {
-        $pdo->prepare('INSERT INTO contracts (contract_no,contract_name,customer_name,payment_type,signer_party,signer_name,phone,amount,signed_date,effective_date,expiry_date,status,type_id,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+        $pdo->prepare('INSERT INTO contracts (contract_no,project_no,contract_name,customer_name,payment_type,signer_party,signer_name,phone,amount,signed_date,effective_date,expiry_date,status,type_id,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
             ->execute(array_merge($vals, [$currentAdminId]));
         $id = (int) $pdo->lastInsertId();
     }
@@ -198,13 +200,16 @@ ob_start();
                     <div class="mf-form-item"><label class="mf-label">合同编号 *</label><input class="mf-input" required name="contract_no" value="<?= e((string) ($row['contract_no'] ?? '')) ?>"></div>
                 </div>
                 <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;">
-                    <div class="mf-form-item"><label class="mf-label">合同名称 *</label><input class="mf-input" required name="contract_name" value="<?= e((string) ($row['contract_name'] ?? '')) ?>"></div>
+                    <div class="mf-form-item"><label class="mf-label">项目号</label><input class="mf-input" name="project_no" value="<?= e((string) ($row['project_no'] ?? '')) ?>" placeholder="合同唯一标识"></div>
                 </div>
                 <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;">
-                    <div class="mf-form-item"><label class="mf-label">客户名称</label><input class="mf-input" name="customer_name" value="<?= e((string) ($row['customer_name'] ?? '')) ?>"></div>
+                    <div class="mf-form-item"><label class="mf-label">合同名称 *</label><input class="mf-input" required name="contract_name" value="<?= e((string) ($row['contract_name'] ?? '')) ?>"></div>
                 </div>
             </div>
             <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
+                <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;">
+                    <div class="mf-form-item"><label class="mf-label">客户名称</label><input class="mf-input" name="customer_name" value="<?= e((string) ($row['customer_name'] ?? '')) ?>"></div>
+                </div>
                 <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;">
                     <div class="mf-form-item"><label class="mf-label">签约方</label><input class="mf-input" name="signer_party" value="<?= e((string) ($row['signer_party'] ?? '')) ?>"></div>
                 </div>

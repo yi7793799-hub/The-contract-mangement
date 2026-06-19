@@ -35,6 +35,7 @@
                         <tr>
                             <th><input type="checkbox" id="selectAll"></th>
                             <th>合同编号</th>
+                            <th>项目号</th>
                             <th>合同名称</th>
                             <th>客户名称</th>
                             <th>金额(万元)</th>
@@ -48,6 +49,7 @@
                         <tr>
                             <td><input type="checkbox" name="ids[]" value="<?= $c['id'] ?>"></td>
                             <td><?= e($c['contract_no']) ?></td>
+                            <td><?= e($c['project_no'] ?? '-') ?></td>
                             <td><?= e($c['contract_name']) ?></td>
                             <td><?= e($c['customer_name']) ?></td>
                             <td><?= number_format($c['amount'], 4) ?></td>

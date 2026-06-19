@@ -865,7 +865,7 @@ class ImportController
                                     <th style="width:180px;">合同编号</th>
                                     <th>合同名称</th>
                                     <th style="width:150px;">客户名称</th>
-                                    <th style="width:100px;">金额(万元)</th>
+                                    <th style="width:100px;">金额</th>
                                     <th style="width:100px;">置信度</th>
                                     <th style="width:160px;">导入时间</th>
                                     <th style="width:80px;">操作</th>
@@ -896,7 +896,7 @@ class ImportController
                                     </td>
                                     <td style="text-align:right;">
                                         <?php if (!empty($c['amount'])): ?>
-                                        <span style="color:#28a745;font-weight:500;"><?= number_format((float)$c['amount'], 4) ?></span>
+                                        <span style="color:#28a745;font-weight:500;">¥<?= number_format((float)$c['amount'], 2) ?></span>
                                         <?php else: ?>
                                         <span style="color:#999;">-</span>
                                         <?php endif; ?>
@@ -1044,10 +1044,14 @@ class ImportController
                             <input type="hidden" name="biz" value="<?= e($biz) ?>">
                             <?php endif; ?>
 
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                                 <div class="mf-form-item">
                                     <label class="mf-label">合同编号</label>
                                     <input type="text" name="contract_no" class="mf-input" value="<?= e($contract['contract_no'] ?? '') ?>">
+                                </div>
+                                <div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;">
+                                    <label class="mf-label" style="color:#d48806;font-weight:700;">项目号</label>
+                                    <input type="text" name="project_no" class="mf-input" value="<?= e($contract['project_no'] ?? '') ?>" placeholder="合同唯一标识" style="border-color:#d48806;font-weight:700;font-size:15px;">
                                 </div>
                                 <div class="mf-form-item">
                                     <label class="mf-label">合同名称 <span class="mf-text-danger">*</span></label>
@@ -1076,8 +1080,9 @@ class ImportController
                                     <input type="text" name="phone" class="mf-input" value="<?= e($contract['phone'] ?? '') ?>">
                                 </div>
                                 <div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;">
-                                    <label class="mf-label" style="color:#d48806;font-weight:700;">合同金额（万元）</label>
-                                    <input type="number" name="amount" class="mf-input" value="<?= e(number_format((float) ($contract['amount'] ?? 0), 4, '.', '')) ?>" step="0.0001" style="border-color:#d48806;font-weight:700;font-size:15px;">
+                                    <label class="mf-label" style="color:#d48806;font-weight:700;">合同金额</label>
+                                    <input type="text" id="amountDisplay" class="mf-input" value="<?= number_format((float)($contract['amount'] ?? 0), 2) ?>" style="border-color:#d48806;font-weight:700;font-size:15px;">
+                                    <input type="hidden" name="amount" id="amountValue" value="<?= e($contract['amount'] ?? 0) ?>">
                                 </div>
                             </div>
 
@@ -1103,7 +1108,7 @@ class ImportController
                                 <?php else: ?>
                                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                                     <?php foreach ($files as $file): ?>
-                                    <a href="<?= url('api/file-download.php?id=' . $file['id']) ?>" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;background:#ecf5ff;color:#409eff;border-radius:4px;font-size:14px;text-decoration:none;">
+                                    <a href="<?= url('api/file-download.php?id=' . (int)($file['id'] ?? 0)) ?>" target="_blank" style="display:inline-flex;align-items:center;gap:4px;padding:8px 16px;background:#ecf5ff;color:#409eff;border-radius:4px;font-size:14px;text-decoration:none;">
                                         <i class="bi bi-file-earmark-pdf"></i> <?= e($file['origin_name'] ?? $file['file_name']) ?>
                                     </a>
                                     <?php endforeach; ?>
@@ -1120,7 +1125,9 @@ class ImportController
                                 <a href="<?= url('import/approve/do.php?id=' . $id) ?>" class="mf-btn mf-btn--success" style="flex:1;" onclick="return confirm('保存并审核通过？')">
                                     <i class="bi bi-check-circle"></i> 审核通过
                                 </a>
-                                <a href="<?= url('import/reject/do.php?id=' . $id) ?>" class="mf-btn mf-btn--danger" onclick="return confirm('确定驳回删除？')">
+                            </div>
+                            <div style="margin-top:12px;">
+                                <a href="<?= url('import/reject/do.php?id=' . $id) ?>" class="mf-btn mf-btn--danger" style="width:100%;" onclick="return confirm('确定驳回删除？')">
                                     <i class="bi bi-x-circle"></i> 驳回
                                 </a>
                             </div>
@@ -1142,6 +1149,41 @@ class ImportController
         </div>
 
         <script>
+        // 金额千分位格式化
+        function formatAmount(num) {
+            if (!num && num !== 0) return '';
+            var parts = num.toString().split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            if (parts[1] && parts[1].length > 2) {
+                parts[1] = parts[1].substring(0, 2);
+            }
+            return parts.join('.');
+        }
+
+        function parseAmount(str) {
+            return str.replace(/,/g, '') || '0';
+        }
+
+        var amountDisplay = document.getElementById('amountDisplay');
+        var amountValue = document.getElementById('amountValue');
+
+        // 输入时格式化显示
+        amountDisplay.addEventListener('input', function(e) {
+            var val = parseAmount(this.value);
+            amountValue.value = val;
+        });
+
+        // 失焦时格式化
+        amountDisplay.addEventListener('blur', function(e) {
+            var val = parseAmount(this.value);
+            this.value = formatAmount(parseFloat(val) || 0);
+        });
+
+        // 获焦时显示原始值便于编辑
+        amountDisplay.addEventListener('focus', function(e) {
+            this.value = parseAmount(this.value);
+        });
+
         document.querySelector('a[href*="approve/do"]').addEventListener('click', function(e) {
             e.preventDefault();
             var form = document.getElementById('editForm');
@@ -1192,9 +1234,18 @@ class ImportController
             redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
         }
 
+        // 检查合同编号是否重复（排除当前合同）
+        $contractNo = trim($_POST['contract_no'] ?? '');
+        $checkStmt = db()->prepare("SELECT id FROM contracts WHERE contract_no = ? AND id != ?");
+        $checkStmt->execute([$contractNo, $id]);
+        if ($checkStmt->fetch()) {
+            $_SESSION['error'] = '合同编号已存在，请使用其他编号';
+            redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
+        }
+
         $stmt = db()->prepare(
             "UPDATE contracts SET
-                contract_no = ?, contract_name = ?, customer_name = ?, signer_party = ?,
+                contract_no = ?, project_no = ?, contract_name = ?, customer_name = ?, signer_party = ?,
                 signer_name = ?, phone = ?, amount = ?, signed_date = ?, effective_date = ?,
                 expiry_date = ?, type_id = ?, payment_type = ?
             WHERE id = ? AND status = 'pending_review'"
@@ -1202,6 +1253,7 @@ class ImportController
 
         $stmt->execute([
             trim($_POST['contract_no'] ?? ''),
+            trim($_POST['project_no'] ?? ''),
             trim($_POST['contract_name'] ?? ''),
             trim($_POST['customer_name'] ?? ''),
             trim($_POST['signer_party'] ?? ''),
@@ -1241,10 +1293,19 @@ class ImportController
             redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
         }
 
+        // 检查合同编号是否重复（排除当前合同）
+        $contractNo = trim($_POST['contract_no'] ?? '');
+        $checkStmt = db()->prepare("SELECT id FROM contracts WHERE contract_no = ? AND id != ?");
+        $checkStmt->execute([$contractNo, $id]);
+        if ($checkStmt->fetch()) {
+            $_SESSION['error'] = '合同编号已存在，请使用其他编号';
+            redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
+        }
+
         // 先更新
         $stmt = db()->prepare(
             "UPDATE contracts SET
-                contract_no = ?, contract_name = ?, customer_name = ?, signer_party = ?,
+                contract_no = ?, project_no = ?, contract_name = ?, customer_name = ?, signer_party = ?,
                 signer_name = ?, phone = ?, amount = ?, signed_date = ?, effective_date = ?,
                 expiry_date = ?, type_id = ?, payment_type = ?, status = 'ongoing'
             WHERE id = ? AND status = 'pending_review'"
@@ -1252,6 +1313,7 @@ class ImportController
 
         $stmt->execute([
             trim($_POST['contract_no'] ?? ''),
+            trim($_POST['project_no'] ?? ''),
             trim($_POST['contract_name'] ?? ''),
             trim($_POST['customer_name'] ?? ''),
             trim($_POST['signer_party'] ?? ''),
