@@ -276,10 +276,23 @@ ob_start();
       </tr>
       </thead>
       <tbody>
-      <?php foreach ($rows as $r): ?>
-        <tr>
+      <?php foreach ($rows as $r):
+        // 检查必填项是否缺失
+        $missingProjectNo = empty($r['project_no']) || trim($r['project_no']) === '';
+        $missingAmount = (float) $r['amount'] <= 0;
+        $missingExpiryDate = empty($r['expiry_date']);
+        $hasMissing = $missingProjectNo || $missingAmount || $missingExpiryDate;
+
+        // 构建缺失提示
+        $missingTips = [];
+        if ($missingProjectNo) $missingTips[] = '项目号';
+        if ($missingAmount) $missingTips[] = '合同金额';
+        if ($missingExpiryDate) $missingTips[] = '截止日期';
+        $missingTitle = '缺失：' . implode('、', $missingTips) . '，请补充';
+      ?>
+        <tr <?= $hasMissing ? 'style="background-color:#fef0f0;" title="' . e($missingTitle) . '"' : '' ?>>
           <td><?= e((string) $r['contract_no']) ?></td>
-          <td><?= e((string) ($r['project_no'] ?? '-')) ?></td>
+          <td><?= e((string) ($r['project_no'] ?: '-')) ?></td>
           <td>
             <a
               href="<?= e(url('contract_view.php?id=' . (int) $r['id'] . ($biz !== '' ? '&biz=' . rawurlencode($biz) : ''))) ?>"

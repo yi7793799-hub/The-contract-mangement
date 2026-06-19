@@ -105,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     $typeId = (int) ($_POST['type_id'] ?? 0);
-    $longTerm = (string) ($_POST['long_term'] ?? '') === '1';
     $vals = [
         trim((string) ($_POST['contract_no'] ?? '')),
         trim((string) ($_POST['project_no'] ?? '')),
@@ -118,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         round((float) ($_POST['amount'] ?? 0), 2),
         ($_POST['signed_date'] ?? '') ?: null,
         ($_POST['effective_date'] ?? '') ?: null,
-        $longTerm ? null : (($_POST['expiry_date'] ?? '') ?: null),
+        ($_POST['expiry_date'] ?? '') ?: null,
         (string) ($_POST['status'] ?? 'ongoing'),
         $typeId > 0 ? $typeId : null,
     ];
@@ -258,12 +257,8 @@ ob_start();
                 </div>
                 <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;">
                     <div class="mf-form-item">
-                        <label class="mf-label">截止日期</label>
-                        <input class="mf-input" type="date" id="expiryDateInput" name="expiry_date" value="<?= e((string) ($row['expiry_date'] ?? '')) ?>">
-                        <label class="mf-small mf-text-muted" style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;">
-                            <input type="checkbox" id="longTermCheck" name="long_term" value="1"<?= empty($row['expiry_date']) ? ' checked' : '' ?>>
-                            长期有效
-                        </label>
+                        <label class="mf-label">截止日期 <span class="mf-text-danger">*</span></label>
+                        <input class="mf-input" type="date" name="expiry_date" value="<?= e((string) ($row['expiry_date'] ?? '')) ?>" required>
                     </div>
                 </div>
             </div>
@@ -398,18 +393,6 @@ ob_start();
       }).join('');
       preview.innerHTML = html;
     });
-  }
-
-  var longTermCheck = document.getElementById('longTermCheck');
-  var expiryDateInput = document.getElementById('expiryDateInput');
-  if (longTermCheck && expiryDateInput) {
-    function syncLongTerm() {
-      var checked = !!longTermCheck.checked;
-      expiryDateInput.disabled = checked;
-      if (checked) expiryDateInput.value = '';
-    }
-    longTermCheck.addEventListener('change', syncLongTerm);
-    syncLongTerm();
   }
 })();
 </script>
