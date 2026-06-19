@@ -1077,7 +1077,7 @@ class ImportController
                                 </div>
                                 <div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;">
                                     <label class="mf-label" style="color:#d48806;font-weight:700;">合同金额（万元）</label>
-                                    <input type="number" name="amount" class="mf-input" value="<?= e($contract['amount'] ?? 0) ?>" step="0.0001" style="border-color:#d48806;font-weight:700;font-size:15px;">
+                                    <input type="number" name="amount" class="mf-input" value="<?= e(number_format((float) ($contract['amount'] ?? 0), 4, '.', '')) ?>" step="0.0001" style="border-color:#d48806;font-weight:700;font-size:15px;">
                                 </div>
                             </div>
 
