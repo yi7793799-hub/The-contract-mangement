@@ -488,7 +488,155 @@ body.mf-app .mf-stat-tile--amber {
   background: #fb8c00;
 }
 
-/* 响应式 */
+/* ========== Dashboard 分层展示 ========== */
+/* 核心指标区域：4个大卡片 */
+body.mf-app .mf-stat-dashboard--core {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (min-width: 768px) {
+  body.mf-app .mf-stat-dashboard--core {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+body.mf-app .mf-stat-tile--core {
+  min-height: 120px;
+  padding: 14px 14px 36px;
+}
+body.mf-app .mf-stat-tile--core .mf-stat-tile__label {
+  font-size: 13px;
+}
+body.mf-app .mf-stat-tile--core .mf-stat-tile__value {
+  font-size: 24px;
+}
+body.mf-app .mf-stat-tile--core .mf-stat-tile__icon {
+  font-size: 2.2rem;
+  right: 12px;
+  bottom: 10px;
+}
+
+/* 详细统计折叠区域 */
+.mf-stat-collapse {
+  margin-bottom: 14px;
+}
+.mf-stat-collapse__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  user-select: none;
+}
+.mf-stat-collapse__header:hover {
+  background: #f5f7fa;
+}
+.mf-stat-collapse__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #606266;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mf-stat-collapse__toggle {
+  font-size: 12px;
+  color: #909399;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.25s ease;
+}
+.mf-stat-collapse__toggle-icon {
+  font-size: 14px;
+  transition: transform 0.25s ease;
+}
+.mf-stat-collapse.is-open .mf-stat-collapse__toggle-icon {
+  transform: rotate(180deg);
+}
+.mf-stat-collapse__body {
+  display: none;
+  padding-top: 10px;
+}
+.mf-stat-collapse.is-open .mf-stat-collapse__body {
+  display: block;
+}
+/* 详细统计内部网格：2行4列 */
+body.mf-app .mf-stat-dashboard--detail {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (min-width: 768px) {
+  body.mf-app .mf-stat-dashboard--detail {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1200px) {
+  body.mf-app .mf-stat-dashboard--detail {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+/* 详细统计卡片：较小样式 */
+body.mf-app .mf-stat-tile--detail {
+  min-height: 82px;
+  padding: 10px 10px 24px;
+}
+body.mf-app .mf-stat-tile--detail .mf-stat-tile__label {
+  font-size: 11px;
+}
+body.mf-app .mf-stat-tile--detail .mf-stat-tile__value {
+  font-size: 18px;
+}
+body.mf-app .mf-stat-tile--detail .mf-stat-tile__icon {
+  font-size: 1.5rem;
+  right: 8px;
+  bottom: 6px;
+}
+
+/* 卡片交互性：可点击样式 */
+body.mf-app .mf-stat-tile--clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+body.mf-app .mf-stat-tile--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+body.mf-app .mf-stat-tile--clickable:active {
+  transform: translateY(0);
+}
+/* 悬停时显示提示图标 */
+body.mf-app .mf-stat-tile--clickable::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 18px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+body.mf-app .mf-stat-tile--clickable:hover::after {
+  opacity: 1;
+}
+/* 核心卡片的点击提示 */
+body.mf-app .mf-stat-tile--core.mf-stat-tile--clickable::after {
+  width: 22px;
+  height: 22px;
+  right: 12px;
+  top: 12px;
+}
+
+/* 响应式调整 */
 @media (max-width: 767.98px) {
   .mf-sidebar {
     width: 56px;
