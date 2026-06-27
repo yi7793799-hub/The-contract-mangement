@@ -75,8 +75,9 @@ $paymentFilter = (string) ($_GET['payment_type'] ?? '');
 $where = ['c.is_archived = 1'];
 $params = [];
 if ($kw !== '') {
-    $where[] = '(c.contract_no LIKE ? OR c.contract_name LIKE ? OR c.customer_name LIKE ?)';
+    $where[] = '(c.contract_no LIKE ? OR c.project_no LIKE ? OR c.contract_name LIKE ? OR c.customer_name LIKE ?)';
     $like = '%' . $kw . '%';
+    $params[] = $like;
     $params[] = $like;
     $params[] = $like;
     $params[] = $like;
@@ -128,7 +129,7 @@ ob_start();
     <?php if ((string) ($_GET['deleted'] ?? '') === '1'): ?><div class="mf-alert mf-alert--success mf-mb-2">删除成功</div><?php endif; ?>
     <?php if ((string) ($_GET['err'] ?? '') !== ''): ?><div class="mf-alert mf-alert--danger mf-mb-2"><?= e((string) $_GET['err']) ?></div><?php endif; ?>
     <form method="get" class="mf-row mf-row--tight mf-items-end mf-toolbar-row">
-      <div class="mf-col mf-col-12 mf-col-md-3"><label class="mf-label mf-small mf-text-muted mf-mb-0">关键词</label><input class="mf-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号/名称/客户名称"></div>
+      <div class="mf-col mf-col-12 mf-col-md-3"><label class="mf-label mf-small mf-text-muted mf-mb-0">关键词</label><input class="mf-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号/项目号/名称/客户名称"></div>
       <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">状态</label><select class="mf-select" name="status"><option value="">全部</option><option value="ongoing"<?= $statusFilter==='ongoing'?' selected':'' ?>>进行中</option><option value="completed"<?= $statusFilter==='completed'?' selected':'' ?>>已完成</option><option value="terminated"<?= $statusFilter==='terminated'?' selected':'' ?>>已终止</option><option value="expiring"<?= $statusFilter==='expiring'?' selected':'' ?>>即将到期</option></select></div>
       <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">合同类型</label><select class="mf-select" name="type_id"><option value="0">全部</option><?php foreach ($types as $t): ?><option value="<?= (int)$t['id'] ?>"<?= (int)$t['id']===$typeFilter?' selected':'' ?>><?= e((string)$t['name']) ?></option><?php endforeach; ?></select></div>
       <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">款项类型</label><select class="mf-select" name="payment_type"><option value="">全部</option><option value="receipt"<?= $paymentFilter==='receipt'?' selected':'' ?>>收款</option><option value="payment"<?= $paymentFilter==='payment'?' selected':'' ?>>付款</option></select></div>

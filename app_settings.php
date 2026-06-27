@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify($_POST['csrf'] ?? null)) {
         $error = '会话已过期';
     } else {
+        // 保存系统设置
         $siteName = trim((string) ($_POST['site_name'] ?? ''));
         $ownContractOnly = (string) ($_POST['own_contract_only'] ?? '') === '1' ? 1 : 0;
         $logoPath = $row['logo_path'] ?? null;
@@ -82,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $row['site_name'] = $siteName;
             $row['logo_path'] = $logoPath;
             $row['own_contract_only'] = $ownContractOnly;
+
             $ok = '已保存';
         }
     }

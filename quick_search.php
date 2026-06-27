@@ -10,8 +10,9 @@ $searched = (string) ($_GET['searched'] ?? '') === '1';
 $where = ['c.is_archived = 0'];
 $params = [];
 if ($kw !== '') {
-    $where[] = '(c.contract_no LIKE ? OR c.contract_name LIKE ? OR c.customer_name LIKE ?)';
+    $where[] = '(c.contract_no LIKE ? OR c.project_no LIKE ? OR c.contract_name LIKE ? OR c.customer_name LIKE ?)';
     $like = '%' . $kw . '%';
+    $params[] = $like;
     $params[] = $like;
     $params[] = $like;
     $params[] = $like;
@@ -71,7 +72,7 @@ ob_start();
       <input type="hidden" name="searched" value="1">
       <div class="mf-form-item">
         <label class="mf-label mf-small mf-text-muted">关键词</label>
-        <input class="mf-input qs-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号 / 合同名称 / 客户名称">
+        <input class="mf-input qs-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号 / 项目号 / 合同名称 / 客户名称">
       </div>
       <div class="qs-row-gap">
         <div class="qs-actions">

@@ -150,8 +150,9 @@ if ($ownOnly) {
     $params[] = $currentAdminId;
 }
 if ($kw !== '') {
-    $where[] = '(c.contract_no LIKE ? OR c.contract_name LIKE ?)';
+    $where[] = '(c.contract_no LIKE ? OR c.project_no LIKE ? OR c.contract_name LIKE ?)';
     $like = '%' . $kw . '%';
+    $params[] = $like;
     $params[] = $like;
     $params[] = $like;
 }
@@ -206,7 +207,7 @@ ob_start();
     <form method="get" class="mf-row mf-row--tight mf-items-end mf-toolbar-row">
       <input type="hidden" name="tab" value="<?= e($tab) ?>">
       <input type="hidden" name="biz" value="<?= e($biz) ?>">
-      <div class="mf-col mf-col-12 mf-col-md-6"><label class="mf-label mf-small mf-text-muted mf-mb-0">关键词</label><input class="mf-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号 / 合同名称"></div>
+      <div class="mf-col mf-col-12 mf-col-md-6"><label class="mf-label mf-small mf-text-muted mf-mb-0">关键词</label><input class="mf-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号 / 项目号 / 合同名称"></div>
       <div class="mf-col mf-col-12 mf-col-md-6 mf-toolbar-actions">
         <button class="mf-btn mf-btn--primary">查询</button>
         <a class="mf-btn mf-btn--default" href="<?= e(url('finance_progress.php?tab=' . $tab . '&biz=' . $biz)) ?>">重置</a>

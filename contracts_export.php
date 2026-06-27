@@ -18,8 +18,9 @@ require_permission($archived ? 'archived.export' : 'contracts.export');
 $where = ['c.is_archived = ?'];
 $params = [$archived ? 1 : 0];
 if ($kw !== '') {
-    $where[] = '(c.contract_no LIKE ? OR c.contract_name LIKE ? OR c.signer_party LIKE ? OR c.customer_name LIKE ?)';
+    $where[] = '(c.contract_no LIKE ? OR c.project_no LIKE ? OR c.contract_name LIKE ? OR c.signer_party LIKE ? OR c.customer_name LIKE ?)';
     $like = '%' . $kw . '%';
+    $params[] = $like;
     $params[] = $like;
     $params[] = $like;
     $params[] = $like;

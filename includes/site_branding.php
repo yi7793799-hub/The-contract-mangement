@@ -13,7 +13,7 @@ function mf_ensure_app_settings_table(PDO $pdo): void
           site_name VARCHAR(200) NOT NULL DEFAULT \'\',
           logo_path VARCHAR(255) NULL,
           own_contract_only TINYINT(1) NOT NULL DEFAULT 0,
-          updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP
+          updated_at TIMESTAMP NULL DEFAULT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
     );
     $hasOwnContractOnly = db_column_exists($pdo, 'app_settings', 'own_contract_only');

@@ -1056,8 +1056,93 @@ class ImportController
         // 获取合同类型列表
         $types = $this->getContractTypes();
 
+        // 找到PDF文件
+        $pdfFile = null;
+        foreach ($files as $file) {
+            $ext = strtolower(pathinfo($file['origin_name'] ?? '', PATHINFO_EXTENSION));
+            if ($ext === 'pdf') {
+                $pdfFile = $file;
+                break;
+            }
+        }
+
         ob_start();
         ?>
+        <style>
+        .resize-container {
+            display: flex;
+            height: calc(100vh - 130px);
+        }
+        .resize-panel {
+            min-width: 250px;
+            overflow: hidden;
+            position: relative;
+        }
+        .resize-panel .mf-panel {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        /* 拖拽区域 - 明确可点击 */
+        .resize-drag-area {
+            position: absolute;
+            right: -6px;
+            top: 0;
+            width: 12px;
+            height: 100%;
+            cursor: col-resize;
+            z-index: 100;
+            background: transparent;
+        }
+        .resize-drag-area:hover {
+            background: rgba(64, 158, 255, 0.15);
+        }
+        .resize-drag-area::before {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 40px;
+            background: #c0c4cc;
+            border-radius: 1px;
+        }
+        .resize-drag-area:hover::before {
+            background: #409eff;
+            height: 60px;
+        }
+        /* 拖拽时的遮罩 */
+        .resize-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            cursor: col-resize;
+            display: none;
+        }
+        .resize-overlay.active {
+            display: block;
+        }
+        /* 宽度指示器 */
+        .resize-width-tip {
+            position: fixed;
+            padding: 4px 10px;
+            background: #409eff;
+            color: #fff;
+            font-size: 12px;
+            border-radius: 4px;
+            z-index: 10000;
+            white-space: nowrap;
+            pointer-events: none;
+            display: none;
+        }
+        .resize-width-tip.active {
+            display: block;
+        }
+        </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 12px 0;">
             <a href="<?= url('import/review.php' . $bizQuery) ?>" class="mf-btn mf-btn--default mf-btn--sm">
                 <i class="bi bi-arrow-left"></i> 返回列表
@@ -1066,9 +1151,10 @@ class ImportController
             <div style="width:90px;"></div>
         </div>
 
-        <div style="display:flex;gap:16px;height:calc(100vh - 130px);">
-            <div style="flex:1;min-width:0;display:flex;">
-                <div class="mf-panel" style="width:100%;display:flex;flex-direction:column;">
+        <div class="resize-container">
+            <!-- 左侧：合同信息表单 -->
+            <div class="resize-panel" id="panel1" style="width:35%;">
+                <div class="mf-panel" style="height:100%;display:flex;flex-direction:column;">
                     <div class="mf-panel__header" style="background:#409eff;color:#fff;">
                         <i class="bi bi-pencil-square"></i> 合同信息
                     </div>
@@ -1170,21 +1256,136 @@ class ImportController
                         </form>
                     </div>
                 </div>
+                <div class="resize-drag-area" data-panel="panel1"></div>
             </div>
 
-            <div style="width:550px;flex-shrink:0;">
+            <?php if ($pdfFile): ?>
+            <!-- 中间：PDF预览 -->
+            <div class="resize-panel" id="panel2" style="width:30%;">
+                <div class="mf-panel" style="height:100%;display:flex;flex-direction:column;">
+                    <div class="mf-panel__header" style="background:#e6a23c;color:#fff;">
+                        <i class="bi bi-file-pdf"></i> PDF附件预览
+                    </div>
+                    <div class="mf-panel__body" style="flex:1;padding:0;overflow:hidden;">
+                        <iframe src="<?= url('api/file-download.php?id=' . (int)($pdfFile['id'])) ?>" style="width:100%;height:100%;border:none;"></iframe>
+                    </div>
+                </div>
+                <div class="resize-drag-area" data-panel="panel2"></div>
+            </div>
+            <?php endif; ?>
+
+            <!-- 右侧：OCR识别文本 -->
+            <div class="resize-panel" id="panel3" style="flex:1;">
                 <div class="mf-panel" style="height:100%;display:flex;flex-direction:column;">
                     <div class="mf-panel__header" style="background:#67c23a;color:#fff;">
                         <i class="bi bi-file-text"></i> OCR识别文本
                     </div>
                     <div class="mf-panel__body" style="flex:1;overflow-y:auto;padding:0;">
-                        <pre style="white-space:pre-wrap;word-break:break-word;margin:0;font-family:Consolas,monospace;font-size:14px;line-height:1.7;color:#303133;background:#fafafa;padding:16px;display:block;"><?= e($ocrText ?: '无OCR识别文本') ?></pre>
+                        <pre style="white-space:pre-wrap;word-break:break-word;margin:0;font-family:Consolas,monospace;font-size:13px;line-height:1.6;color:#303133;background:#fafafa;padding:12px;display:block;"><?= e($ocrText ?: '无OCR识别文本') ?></pre>
                     </div>
                 </div>
             </div>
         </div>
 
         <script>
+        // 拖拽调节宽度 - requestAnimationFrame优化版
+        (function() {
+            var dragAreas = document.querySelectorAll('.resize-drag-area');
+            var overlay = document.createElement('div');
+            overlay.className = 'resize-overlay';
+            document.body.appendChild(overlay);
+
+            var widthTip = document.createElement('div');
+            widthTip.className = 'resize-width-tip';
+            document.body.appendChild(widthTip);
+
+            var isDragging = false;
+            var currentPanel = null;
+            var startX = 0;
+            var startWidth = 0;
+            var lastX = 0;
+            var rafId = null;
+
+            // 拖拽区域点击
+            dragAreas.forEach(function(area) {
+                area.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    var panelId = this.dataset.panel;
+                    currentPanel = document.getElementById(panelId);
+
+                    if (!currentPanel) return;
+
+                    isDragging = true;
+                    startX = e.clientX;
+                    lastX = startX;
+                    startWidth = currentPanel.offsetWidth;
+
+                    overlay.classList.add('active');
+                });
+            });
+
+            // 使用requestAnimationFrame更新，避免卡顿
+            function updateWidth() {
+                if (!isDragging || !currentPanel) return;
+
+                var dx = lastX - startX;
+                var newWidth = startWidth + dx;
+                var minWidth = 250;
+
+                // 限制最小宽度
+                if (newWidth < minWidth) {
+                    newWidth = minWidth;
+                }
+
+                // 计算剩余宽度是否足够
+                var container = currentPanel.parentElement;
+                var totalWidth = container.offsetWidth;
+                var otherPanelsMinWidth = 500; // 其他两个面板最小宽度
+
+                if (newWidth > totalWidth - otherPanelsMinWidth) {
+                    newWidth = totalWidth - otherPanelsMinWidth;
+                }
+
+                // 设置宽度
+                currentPanel.style.width = newWidth + 'px';
+
+                // 更新宽度提示
+                widthTip.textContent = '宽度: ' + Math.round(newWidth) + 'px';
+                widthTip.style.left = lastX + 'px';
+                widthTip.style.top = (currentPanel.getBoundingClientRect().top + 20) + 'px';
+                widthTip.classList.add('active');
+            }
+
+            // 鼠标移动
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                lastX = e.clientX;
+
+                // 使用requestAnimationFrame更新
+                if (rafId) {
+                    cancelAnimationFrame(rafId);
+                }
+                rafId = requestAnimationFrame(updateWidth);
+            });
+
+            // 鼠标释放
+            document.addEventListener('mouseup', function() {
+                if (!isDragging) return;
+
+                isDragging = false;
+                currentPanel = null;
+                overlay.classList.remove('active');
+                widthTip.classList.remove('active');
+
+                if (rafId) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
+            });
+        })();
+
         // 金额千分位格式化
         function formatAmount(num) {
             if (!num && num !== 0) return '';

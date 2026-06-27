@@ -123,8 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $kw = trim((string) ($_GET['kw'] ?? ''));
 $statusFilter = (string) ($_GET['status'] ?? '');
-$typeFilter = (int) ($_GET['type_id'] ?? 0);
-$reachFilter = (string) ($_GET['reach'] ?? '');
+$expiryStart = trim((string) ($_GET['expiry_start'] ?? ''));
+$expiryEnd = trim((string) ($_GET['expiry_end'] ?? ''));
 $biz = (string) ($_GET['biz'] ?? '');
 if (!in_array($biz, ['receipt', 'payment'], true)) {
     $biz = '';
@@ -143,8 +143,9 @@ if ($biz !== '') {
     $params[] = $biz;
 }
 if ($kw !== '') {
-    $where[] = '(c.contract_no LIKE ? OR c.contract_name LIKE ? OR c.signer_party LIKE ? OR c.customer_name LIKE ?)';
+    $where[] = '(c.contract_no LIKE ? OR c.project_no LIKE ? OR c.contract_name LIKE ? OR c.signer_party LIKE ? OR c.customer_name LIKE ?)';
     $like = '%' . $kw . '%';
+    $params[] = $like;
     $params[] = $like;
     $params[] = $like;
     $params[] = $like;
@@ -158,17 +159,14 @@ if (in_array($statusFilter, ['ongoing', 'completed', 'terminated', 'expiring', '
         $params[] = $statusFilter;
     }
 }
-if ($typeFilter > 0) {
-    $where[] = 'c.type_id = ?';
-    $params[] = $typeFilter;
+// 截止日期范围筛选
+if ($expiryStart !== '') {
+    $where[] = 'c.expiry_date >= ?';
+    $params[] = $expiryStart;
 }
-if (in_array($reachFilter, ['1', '0'], true)) {
-    $expr = "COALESCE((SELECT SUM(tx.amount) FROM contract_transactions tx WHERE tx.contract_id = c.id AND tx.tx_type = c.payment_type), 0)";
-    if ($reachFilter === '1') {
-        $where[] = $expr . ' >= c.amount';
-    } else {
-        $where[] = $expr . ' < c.amount';
-    }
+if ($expiryEnd !== '') {
+    $where[] = 'c.expiry_date <= ?';
+    $params[] = $expiryEnd;
 }
 $types = $pdo->query('SELECT id,name FROM contract_types ORDER BY id DESC')->fetchAll() ?: [];
 $exportQuery = http_build_query([
@@ -176,8 +174,8 @@ $exportQuery = http_build_query([
     'biz' => $biz,
     'kw' => $kw,
     'status' => $statusFilter,
-    'type_id' => $typeFilter,
-    'reach' => $reachFilter,
+    'expiry_start' => $expiryStart,
+    'expiry_end' => $expiryEnd,
 ]);
 $st = $pdo->prepare(
     "SELECT COUNT(*)
@@ -228,10 +226,9 @@ ob_start();
   <div class="mf-panel__body">
     <form method="get" class="mf-row mf-row--tight mf-items-end mf-toolbar-row">
       <input type="hidden" name="biz" value="<?= e($biz) ?>">
-      <div class="mf-col mf-col-12 mf-col-md-3"><label class="mf-label mf-small mf-text-muted mf-mb-0">关键词</label><input class="mf-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号/名称/签约方/客户名称"></div>
+      <div class="mf-col mf-col-12 mf-col-md-3"><label class="mf-label mf-small mf-text-muted mf-mb-0">关键词</label><input class="mf-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号/项目号/名称/签约方/客户名称"></div>
       <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">状态</label><select class="mf-select" name="status"><option value="">全部</option><option value="ongoing"<?= $statusFilter==='ongoing'?' selected':'' ?>>进行中</option><option value="completed"<?= $statusFilter==='completed'?' selected':'' ?>>已完成</option><option value="terminated"<?= $statusFilter==='terminated'?' selected':'' ?>>已终止</option><option value="expiring"<?= $statusFilter==='expiring'?' selected':'' ?>>即将到期</option><option value="expired"<?= $statusFilter==='expired'?' selected':'' ?>>已过期</option></select></div>
-      <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">合同类型</label><select class="mf-select" name="type_id"><option value="0">全部</option><?php foreach ($types as $t): ?><option value="<?= (int) $t['id'] ?>"<?= (int)$t['id']===$typeFilter?' selected':'' ?>><?= e((string)$t['name']) ?></option><?php endforeach; ?></select></div>
-      <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">金额达标</label><select class="mf-select" name="reach"><option value=""<?= $reachFilter===''?' selected':'' ?>>全部</option><option value="1"<?= $reachFilter==='1'?' selected':'' ?>>已达标</option><option value="0"<?= $reachFilter==='0'?' selected':'' ?>>未达标</option></select></div>
+      <div class="mf-col mf-col-12 mf-col-md-4"><label class="mf-label mf-small mf-text-muted mf-mb-0">截止日期范围</label><div class="mf-flex mf-items-center mf-gap-1"><input type="date" class="mf-input" name="expiry_start" value="<?= e($expiryStart) ?>" style="width:45%"><span style="color:#909399;">~</span><input type="date" class="mf-input" name="expiry_end" value="<?= e($expiryEnd) ?>" style="width:45%"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-3 mf-toolbar-actions"><button class="mf-btn mf-btn--primary">查询</button><a class="mf-btn mf-btn--default" href="<?= e(url('orders.php' . ($biz !== '' ? ('?biz=' . $biz) : ''))) ?>">重置</a><span class="mf-flex-grow mf-toolbar-actions__spacer"></span><?php if ($biz !== ''): ?><a class="mf-btn mf-btn--success" href="<?= e(url('import.php?biz=' . $biz)) ?>"><i class="bi bi-upload"></i> 批量导入</a><?php endif; ?><a class="mf-btn mf-btn--default" href="<?= e(url('contracts_export.php' . ($exportQuery !== '' ? ('?' . $exportQuery) : ''))) ?>">导出</a><a class="mf-btn mf-btn--primary" href="<?= e(url('contract_form.php' . ($biz !== '' ? ('?payment_type=' . $biz) : ''))) ?>">+ 新增合同</a></div>
     </form>
   </div>
@@ -260,18 +257,18 @@ ob_start();
       <tr>
         <th>合同编号</th>
         <th>项目号</th>
+        <th>项目名称</th>
         <th>合同名称</th>
         <?php if ($biz === ''): ?><th>类型</th><?php endif; ?>
         <?php if ($biz === ''): ?><th>款项类型</th><?php endif; ?>
         <th>签约方</th>
-        <th>合同金额(万元)</th>
-        <th>已登记金额(万元)</th>
-        <th>已开票金额(万元)</th>
-        <th>待开票金额(万元)</th>
+        <th>合同金额</th>
+        <th>已登记金额</th>
+        <th>已开票金额</th>
+        <th>待开票金额</th>
         <th>截止日期</th>
         <th>剩余天数</th>
         <th>状态</th>
-        <th>创建人</th>
         <th>操作</th>
       </tr>
       </thead>
@@ -293,6 +290,7 @@ ob_start();
         <tr <?= $hasMissing ? 'style="background-color:#fef0f0;" title="' . e($missingTitle) . '"' : '' ?>>
           <td><?= e((string) $r['contract_no']) ?></td>
           <td><?= e((string) ($r['project_no'] ?: '-')) ?></td>
+          <td><?= e((string) ($r['project_name'] ?: '-')) ?></td>
           <td>
             <a
               href="<?= e(url('contract_view.php?id=' . (int) $r['id'] . ($biz !== '' ? '&biz=' . rawurlencode($biz) : ''))) ?>"
@@ -310,7 +308,6 @@ ob_start();
           <td><?= e((string) ($r['expiry_date'] ?: '-')) ?></td>
           <td><?php if ((string) $r['status'] === 'completed' || $r['left_days'] === null): ?>-<?php else: ?><?= (int) $r['left_days'] ?> 天<?php endif; ?></td>
           <td><?= mf_contract_status_badge((string) ($r['display_status'] ?? $r['status'])) ?></td>
-          <td><?= e((string) ($r['creator_name'] ?? '-')) ?></td>
           <td>
             <details class="mf-op-menu">
               <summary>⋮</summary>

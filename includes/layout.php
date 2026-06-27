@@ -178,7 +178,7 @@ try {
             <?php if (admin_can('search.view')): ?><a class="mf-nav-link <?= $activeNav === 'quick_search' ? 'active' : '' ?>" href="<?= e(url('quick_search.php')) ?>"><i class="fa-solid fa-magnifying-glass mf-nav-fa mf-nav-fa--dashboard" aria-hidden="true"></i><span>快速搜索</span></a><?php endif; ?>
             <?php if (admin_can('contracts.view') || admin_can('receipt.progress.view') || admin_can('receipt.records.view')): ?><a class="mf-nav-link <?= $receiptActive ? 'active' : '' ?>" href="#" data-receipt-toggle>
                 <i class="fa-solid fa-hand-holding-dollar mf-nav-fa mf-nav-fa--orders" aria-hidden="true"></i>
-                <span>收款业务</span>
+                <span>收入业务</span>
                 <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:12px;opacity:.75;transform:<?= $receiptOpen ? 'rotate(180deg)' : 'rotate(0deg)' ?>;" id="receiptChevron"></i>
             </a>
             <div id="receiptSubmenu" style="display:<?= $receiptOpen ? 'block' : 'none' ?>;">
@@ -350,14 +350,13 @@ document.addEventListener('DOMContentLoaded', function () {
 <?php if (!empty($expiringList)): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  var lines = <?= json_encode(array_map(static function ($x) {
-      return sprintf('%s｜%s｜到期:%s', $x['contract_no'], $x['contract_name'], $x['expiry_date']);
-  }, $expiringList), JSON_UNESCAPED_UNICODE) ?>;
+  var items = <?= json_encode($expiringList, JSON_UNESCAPED_UNICODE) ?>;
+  var remindDays = <?= json_encode($remindDays) ?>;
   var box = document.createElement('div');
-  box.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:9999;width:340px;max-width:calc(100vw - 24px);background:#fff;border:1px solid #dcdfe6;padding:10px 12px;box-shadow:none;';
-  box.innerHTML = '<div style="font-weight:600;margin-bottom:6px;">到期提醒（' + <?= json_encode($remindDays) ?> + '天内）</div>'
-    + '<div style="font-size:12px;color:#606266;line-height:1.55;max-height:180px;overflow:auto;">'
-    + lines.map(function (x) { return '<div style="padding:3px 0;border-top:1px dashed #ebeef5;">' + x + '</div>'; }).join('')
+  box.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:9999;width:auto;max-width:calc(100vw - 24px);background:#fff;border:1px solid #dcdfe6;padding:10px 14px;box-shadow:none;border-radius:8px;';
+  box.innerHTML = '<div style="font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="bi bi-bell" style="color:#e6a23c;"></i>到期提醒（' + remindDays + '天内）</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#606266;">'
+    + items.map(function (x) { return '<div style="background:#fdf6ec;border:1px solid #faecd8;border-radius:6px;padding:6px 10px;white-space:nowrap;"><span style="color:#e6a23c;font-weight:500;">' + x.contract_no + '</span>｜' + x.contract_name + '｜到期:<span style="color:#f56c6c;">' + x.expiry_date + '</span></div>'; }).join('')
     + '</div>';
   document.body.appendChild(box);
   setTimeout(function () { box.remove(); }, 12000);
