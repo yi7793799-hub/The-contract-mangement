@@ -1187,7 +1187,7 @@ class ImportController
                                     <input type="text" name="customer_name" class="mf-input" value="<?= e($contract['customer_name'] ?? '') ?>" required>
                                 </div>
                                 <div class="mf-form-item">
-                                    <label class="mf-label">签约方</label>
+                                    <label class="mf-label">甲方</label>
                                     <input type="text" name="signer_party" class="mf-input" value="<?= e($contract['signer_party'] ?? '') ?>">
                                 </div>
                             </div>

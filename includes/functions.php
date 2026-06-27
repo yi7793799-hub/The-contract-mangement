@@ -380,7 +380,7 @@ function mf_ensure_contract_schema(PDO $pdo): void
 function mf_contract_status_label(string $status): string
 {
     $map = [
-        'ongoing' => '进行中',
+        'ongoing' => '履约中',
         'completed' => '已完成',
         'terminated' => '已终止',
         'expiring' => '即将到期',

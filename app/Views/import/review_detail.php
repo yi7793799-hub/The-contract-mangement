@@ -134,7 +134,7 @@
                                 'project_no' => '项目号',
                                 'contract_name' => '合同名称',
                                 'customer_name' => '客户名称',
-                                'signer_party' => '签约方',
+                                'signer_party' => '甲方',
                                 'signer_name' => '签约人',
                                 'phone' => '联系电话',
                                 'amount' => '金额',

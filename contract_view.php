@@ -198,12 +198,14 @@ ob_start();
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">合同名称</label><input class="mf-input" disabled value="<?= e((string) $row['contract_name']) ?>"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">客户名称</label><input class="mf-input" disabled value="<?= e((string) $row['customer_name']) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">签约方</label><input class="mf-input" disabled value="<?= e((string) $row['signer_party']) ?>"></div></div>
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">签约人</label><input class="mf-input" disabled value="<?= e((string) $row['signer_name']) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-6" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">项目名称</label><input class="mf-input" disabled value="<?= e((string) ($row['project_name'] ?? '-')) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-6" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">客户名称</label><input class="mf-input" disabled value="<?= e((string) $row['customer_name']) ?>"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">甲方</label><input class="mf-input" disabled value="<?= e((string) $row['signer_party']) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">签约人</label><input class="mf-input" disabled value="<?= e((string) $row['signer_name']) ?>"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">联系电话</label><input class="mf-input" disabled value="<?= e((string) $row['phone']) ?>"></div></div>
+    </div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item" style="background:#fffbe6;border:2px solid #d48806;padding:12px;border-radius:6px;"><label class="mf-label" style="color:#d48806;font-weight:700;">合同金额</label><input class="mf-input" disabled value="¥<?= e(number_format((float) $row['amount'], 2)) ?>" style="border-color:#d48806;font-weight:700;font-size:15px;background:#fffbe6;"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">金额大写</label><input class="mf-input" disabled value="<?= e(money_to_cn((float) $row['amount'])) ?>"></div></div>
     </div>

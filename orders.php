@@ -226,7 +226,7 @@ ob_start();
   <div class="mf-panel__body">
     <form method="get" class="mf-row mf-row--tight mf-items-end mf-toolbar-row">
       <input type="hidden" name="biz" value="<?= e($biz) ?>">
-      <div class="mf-col mf-col-12 mf-col-md-3"><label class="mf-label mf-small mf-text-muted mf-mb-0">关键词</label><input class="mf-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号/项目号/名称/签约方/客户名称"></div>
+      <div class="mf-col mf-col-12 mf-col-md-3"><label class="mf-label mf-small mf-text-muted mf-mb-0">关键词</label><input class="mf-input" name="kw" value="<?= e($kw) ?>" placeholder="合同编号/项目号/名称/甲方/客户名称"></div>
       <div class="mf-col mf-col-12 mf-col-md-2"><label class="mf-label mf-small mf-text-muted mf-mb-0">状态</label><select class="mf-select" name="status"><option value="">全部</option><option value="ongoing"<?= $statusFilter==='ongoing'?' selected':'' ?>>进行中</option><option value="completed"<?= $statusFilter==='completed'?' selected':'' ?>>已完成</option><option value="terminated"<?= $statusFilter==='terminated'?' selected':'' ?>>已终止</option><option value="expiring"<?= $statusFilter==='expiring'?' selected':'' ?>>即将到期</option><option value="expired"<?= $statusFilter==='expired'?' selected':'' ?>>已过期</option></select></div>
       <div class="mf-col mf-col-12 mf-col-md-4"><label class="mf-label mf-small mf-text-muted mf-mb-0">截止日期范围</label><div class="mf-flex mf-items-center mf-gap-1"><input type="date" class="mf-input" name="expiry_start" value="<?= e($expiryStart) ?>" style="width:45%"><span style="color:#909399;">~</span><input type="date" class="mf-input" name="expiry_end" value="<?= e($expiryEnd) ?>" style="width:45%"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-3 mf-toolbar-actions"><button class="mf-btn mf-btn--primary">查询</button><a class="mf-btn mf-btn--default" href="<?= e(url('orders.php' . ($biz !== '' ? ('?biz=' . $biz) : ''))) ?>">重置</a><span class="mf-flex-grow mf-toolbar-actions__spacer"></span><?php if ($biz !== ''): ?><a class="mf-btn mf-btn--success" href="<?= e(url('import.php?biz=' . $biz)) ?>"><i class="bi bi-upload"></i> 批量导入</a><?php endif; ?><a class="mf-btn mf-btn--default" href="<?= e(url('contracts_export.php' . ($exportQuery !== '' ? ('?' . $exportQuery) : ''))) ?>">导出</a><a class="mf-btn mf-btn--primary" href="<?= e(url('contract_form.php' . ($biz !== '' ? ('?payment_type=' . $biz) : ''))) ?>">+ 新增合同</a></div>
@@ -261,7 +261,7 @@ ob_start();
         <th>合同名称</th>
         <?php if ($biz === ''): ?><th>类型</th><?php endif; ?>
         <?php if ($biz === ''): ?><th>款项类型</th><?php endif; ?>
-        <th>签约方</th>
+        <th>甲方</th>
         <th>合同金额</th>
         <th>已登记金额</th>
         <th>已开票金额</th>

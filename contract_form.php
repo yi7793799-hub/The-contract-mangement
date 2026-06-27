@@ -215,7 +215,7 @@ ob_start();
                     <div class="mf-form-item"><label class="mf-label">客户名称</label><input class="mf-input" name="customer_name" value="<?= e((string) ($row['customer_name'] ?? '')) ?>"></div>
                 </div>
                 <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;">
-                    <div class="mf-form-item"><label class="mf-label">签约方</label><input class="mf-input" name="signer_party" value="<?= e((string) ($row['signer_party'] ?? '')) ?>"></div>
+                    <div class="mf-form-item"><label class="mf-label">甲方</label><input class="mf-input" name="signer_party" value="<?= e((string) ($row['signer_party'] ?? '')) ?>"></div>
                 </div>
                 <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;">
                     <div class="mf-form-item"><label class="mf-label">签约人</label><input class="mf-input" name="signer_name" value="<?= e((string) ($row['signer_name'] ?? '')) ?>"></div>
@@ -223,20 +223,6 @@ ob_start();
                 <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;">
                     <div class="mf-form-item"><label class="mf-label">联系电话</label><input class="mf-input" name="phone" value="<?= e((string) ($row['phone'] ?? '')) ?>"></div>
                 </div>
-            </div>
-            <div class="mf-form-item">
-                <label class="mf-label">款项类型</label>
-                <?php if ($hasTransactions): ?>
-                    <input type="hidden" name="payment_type" value="<?= e((string) ($row['payment_type'] ?? 'receipt')) ?>">
-                <?php endif; ?>
-                <select class="mf-select" name="payment_type" style="max-width:260px;"<?= $hasTransactions ? ' disabled' : '' ?>>
-                    <?php $pt = (string) ($row['payment_type'] ?? 'receipt'); ?>
-                    <option value="receipt"<?= $pt === 'receipt' ? ' selected' : '' ?>>收款</option>
-                    <option value="payment"<?= $pt === 'payment' ? ' selected' : '' ?>>付款</option>
-                </select>
-                <?php if ($hasTransactions): ?>
-                    <div class="mf-small mf-text-muted mf-mt-1">已存在登记进度，款项类型已锁定不可修改。</div>
-                <?php endif; ?>
             </div>
             <div class="mf-form-item">
                 <label class="mf-label">合同金额</label>
@@ -275,25 +261,14 @@ ob_start();
                         <label class="mf-label">合同状态</label>
                         <select class="mf-select" name="status">
                             <?php $sv = (string) ($row['status'] ?? 'ongoing'); ?>
-                            <option value="ongoing"<?= $sv === 'ongoing' ? ' selected' : '' ?>>进行中</option>
+                            <option value="ongoing"<?= $sv === 'ongoing' ? ' selected' : '' ?>>履约中</option>
                             <option value="completed"<?= $sv === 'completed' ? ' selected' : '' ?>>已完成</option>
                             <option value="terminated"<?= $sv === 'terminated' ? ' selected' : '' ?>>已终止</option>
                             <option value="expiring"<?= $sv === 'expiring' ? ' selected' : '' ?>>即将到期</option>
                         </select>
                     </div>
                 </div>
-                <div class="mf-col mf-col-12 mf-col-md-3" style="padding-left:6px;padding-right:6px;">
-                    <div class="mf-form-item">
-                        <label class="mf-label">合同类型</label>
-                        <select class="mf-select" name="type_id">
-                            <option value="0">未分类</option>
-                            <?php foreach ($types as $t): ?>
-                                <option value="<?= (int) $t['id'] ?>"<?= (int) ($row['type_id'] ?? 0) === (int) $t['id'] ? ' selected' : '' ?>><?= e((string) $t['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-                <div class="mf-col mf-col-12 mf-col-md-6" style="padding-left:6px;padding-right:6px;">
+                <div class="mf-col mf-col-12 mf-col-md-9" style="padding-left:6px;padding-right:6px;">
                     <div class="mf-form-item">
                         <label class="mf-label">附件（PDF/Word/图片）</label>
                         <input id="contractAttachmentInput" type="file" class="mf-input" name="attachments[]" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp">
