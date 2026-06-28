@@ -56,7 +56,7 @@
                             <td><?= e($c['project_no'] ?? '-') ?></td>
                             <td><?= e($c['contract_name']) ?></td>
                             <td><?= e($c['customer_name']) ?></td>
-                            <td><?= number_format($c['amount'], 4) ?></td>
+                            <td><?= number_format($c['amount'], 2) ?></td>
                             <td>
                                 <?php
                                 $conf = (float) ($c['import_confidence'] ?? 0);

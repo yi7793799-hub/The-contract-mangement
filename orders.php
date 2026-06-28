@@ -301,10 +301,10 @@ ob_start();
           <?php if ($biz === ''): ?><td><?= e((string) ($r['type_name'] ?: '-')) ?></td><?php endif; ?>
           <?php if ($biz === ''): ?><td><?= mf_payment_type_badge((string) ($r['payment_type'] ?? 'receipt')) ?></td><?php endif; ?>
           <td><?= e((string) $r['signer_party']) ?></td>
-          <td><?= number_format((float) $r['amount'], 4) ?></td>
-          <td><?= number_format((float) $r['done_amount'], 4) ?></td>
-          <td><?= number_format((float) ($r['invoiced_amount'] ?? 0), 4) ?></td>
-          <td><?= number_format(max(0, (float) $r['done_amount'] - (float) ($r['invoiced_amount'] ?? 0)), 4) ?></td>
+          <td><?= number_format((float) $r['amount'], 2) ?></td>
+          <td><?= number_format((float) $r['done_amount'], 2) ?></td>
+          <td><?= number_format((float) ($r['invoiced_amount'] ?? 0), 2) ?></td>
+          <td><?= number_format(max(0, (float) $r['done_amount'] - (float) ($r['invoiced_amount'] ?? 0)), 2) ?></td>
           <td><?= e((string) ($r['expiry_date'] ?: '-')) ?></td>
           <td><?php if ((string) $r['status'] === 'completed' || $r['left_days'] === null): ?>-<?php else: ?><?= (int) $r['left_days'] ?> 天<?php endif; ?></td>
           <td><?= mf_contract_status_badge((string) ($r['display_status'] ?? $r['status'])) ?></td>
