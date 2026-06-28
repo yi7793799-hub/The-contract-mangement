@@ -261,7 +261,7 @@ ob_start();
         <th>合同名称</th>
         <?php if ($biz === ''): ?><th>类型</th><?php endif; ?>
         <?php if ($biz === ''): ?><th>款项类型</th><?php endif; ?>
-        <th>甲方</th>
+        <th><?= $biz === 'payment' ? '乙方' : '甲方' ?></th>
         <th>合同金额</th>
         <th>已登记金额</th>
         <th>已开票金额</th>

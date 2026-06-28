@@ -202,7 +202,7 @@ ob_start();
       <div class="mf-col mf-col-12 mf-col-md-6" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">客户名称</label><input class="mf-input" disabled value="<?= e((string) $row['customer_name']) ?>"></div></div>
     </div>
     <div class="mf-row" style="margin-left:-6px;margin-right:-6px;">
-      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">甲方</label><input class="mf-input" disabled value="<?= e((string) $row['signer_party']) ?>"></div></div>
+      <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label"><?= $paymentType === 'payment' ? '乙方' : '甲方' ?></label><input class="mf-input" disabled value="<?= e((string) $row['signer_party']) ?>"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">签约人</label><input class="mf-input" disabled value="<?= e((string) $row['signer_name']) ?>"></div></div>
       <div class="mf-col mf-col-12 mf-col-md-4" style="padding-left:6px;padding-right:6px;"><div class="mf-form-item"><label class="mf-label">联系电话</label><input class="mf-input" disabled value="<?= e((string) $row['phone']) ?>"></div></div>
     </div>

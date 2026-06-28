@@ -18,6 +18,99 @@ class ImportController
     }
 
     /**
+     * 金额转大写（静态方法，可在模板中调用）
+     */
+    public static function moneyToCn(float $n): string
+    {
+        $n = round($n, 2);
+        if ($n <= 0) {
+            return '零元整';
+        }
+
+        $digit = ['零','壹','贰','叁','肆','伍','陆','柒','捌','玖'];
+        $unit1 = ['','拾','佰','仟'];
+        $unit2 = ['','万','亿'];
+
+        $int = (int) floor($n);
+        $dec = (int) round(($n - $int) * 100);
+
+        $out = '';
+
+        if ($int > 0) {
+            $sections = [];
+            $tempInt = $int;
+            while ($tempInt > 0) {
+                $sections[] = $tempInt % 10000;
+                $tempInt = (int) floor($tempInt / 10000);
+            }
+
+            $sectionCount = count($sections);
+            for ($i = $sectionCount - 1; $i >= 0; $i--) {
+                $section = $sections[$i];
+                if ($section === 0) {
+                    continue;
+                }
+
+                $sectionStr = '';
+                $thousands = (int) floor($section / 1000);
+                $hundreds = (int) floor(($section % 1000) / 100);
+                $tens = (int) floor(($section % 100) / 10);
+                $ones = $section % 10;
+
+                if ($thousands > 0) {
+                    $sectionStr .= $digit[$thousands] . '仟';
+                }
+                if ($hundreds > 0) {
+                    $sectionStr .= $digit[$hundreds] . '佰';
+                } elseif ($thousands > 0 && ($tens > 0 || $ones > 0)) {
+                    $sectionStr .= '零';
+                }
+                if ($tens > 0) {
+                    $sectionStr .= $digit[$tens] . '拾';
+                } elseif ($hundreds > 0 && $ones > 0) {
+                    $sectionStr .= '零';
+                }
+                if ($ones > 0) {
+                    $sectionStr .= $digit[$ones];
+                }
+
+                if ($i === 1) {
+                    $sectionStr .= '万';
+                } elseif ($i === 2) {
+                    $sectionStr .= '亿';
+                }
+
+                if ($out !== '' && $section < 1000) {
+                    $out .= '零';
+                }
+
+                $out .= $sectionStr;
+            }
+
+            $out .= '元';
+        }
+
+        if ($dec === 0) {
+            return $out . '整';
+        }
+
+        $j = (int) floor($dec / 10);
+        $f = $dec % 10;
+
+        if ($j > 0) {
+            $out .= $digit[$j] . '角';
+        }
+        if ($f > 0) {
+            if ($j === 0 && $int > 0) {
+                $out .= '零';
+            }
+            $out .= $digit[$f] . '分';
+        }
+
+        return $out;
+    }
+
+    /**
      * 导入上传页
      */
     public function index(): void
@@ -1183,20 +1276,27 @@ class ImportController
 
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                                 <div class="mf-form-item">
+                                    <label class="mf-label">项目名称</label>
+                                    <input type="text" name="project_name" class="mf-input" value="<?= e($contract['project_name'] ?? '') ?>" placeholder="项目/工程名称">
+                                </div>
+                                <div class="mf-form-item">
                                     <label class="mf-label">客户名称 <span class="mf-text-danger">*</span></label>
                                     <input type="text" name="customer_name" class="mf-input" value="<?= e($contract['customer_name'] ?? '') ?>" required>
                                 </div>
-                                <div class="mf-form-item">
-                                    <label class="mf-label">甲方</label>
-                                    <input type="text" name="signer_party" class="mf-input" value="<?= e($contract['signer_party'] ?? '') ?>">
-                                </div>
                             </div>
 
-                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                <div class="mf-form-item">
+                                    <label class="mf-label"><?= $biz === 'payment' ? '乙方' : '甲方' ?></label>
+                                    <input type="text" name="signer_party" class="mf-input" value="<?= e($contract['signer_party'] ?? '') ?>">
+                                </div>
                                 <div class="mf-form-item">
                                     <label class="mf-label">签约人</label>
                                     <input type="text" name="signer_name" class="mf-input" value="<?= e($contract['signer_name'] ?? '') ?>">
                                 </div>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
                                 <div class="mf-form-item">
                                     <label class="mf-label">联系电话</label>
                                     <input type="text" name="phone" class="mf-input" value="<?= e($contract['phone'] ?? '') ?>">
@@ -1205,6 +1305,10 @@ class ImportController
                                     <label class="mf-label" style="color:#d48806;font-weight:700;">合同金额</label>
                                     <input type="text" id="amountDisplay" class="mf-input" value="<?= number_format((float)($contract['amount'] ?? 0), 2) ?>" style="border-color:#d48806;font-weight:700;font-size:15px;">
                                     <input type="hidden" name="amount" id="amountValue" value="<?= e($contract['amount'] ?? 0) ?>">
+                                </div>
+                                <div class="mf-form-item">
+                                    <label class="mf-label">金额大写</label>
+                                    <input type="text" class="mf-input" disabled value="<?= e(self::moneyToCn((float)($contract['amount'] ?? 0))) ?>">
                                 </div>
                             </div>
 
@@ -1240,13 +1344,53 @@ class ImportController
 
                             <hr style="border:none;border-top:1px solid #ebeef5;margin:24px 0;">
 
+                            <?php if ($biz === 'receipt' || ($biz === '' && ($contract['payment_type'] ?? 'receipt') === 'receipt')): ?>
+                            <!-- 分包信息（仅收款合同） -->
+                            <div class="mf-form-item" style="background:#f0f9eb;border:1px solid #67c23a;padding:12px;border-radius:6px;margin-bottom:16px;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                                    <input type="checkbox" name="is_subcontract" id="isSubcontract" value="1" <?= (int) ($contract['is_subcontract'] ?? 0) === 1 ? 'checked' : '' ?>>
+                                    <label for="isSubcontract" style="font-weight:600;color:#67c23a;cursor:pointer;"><i class="bi bi-diagram-3"></i> 启用分包（审核通过后将自动创建付款子合同）</label>
+                                </div>
+                                <div id="subcontractFields" style="<?= (int) ($contract['is_subcontract'] ?? 0) === 1 ? '' : 'display:none;' ?>">
+                                    <div style="background:#fffbe6;border:1px solid #d48806;padding:8px 12px;border-radius:4px;margin-bottom:12px;font-size:13px;color:#856404;">
+                                        <i class="bi bi-info-circle"></i> 启用分包后，系统将自动创建付款合同（乙方 = 分包公司），用于管理向分包单位的付款。
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                        <div class="mf-form-item">
+                                            <label class="mf-label">分包金额 <span class="mf-text-danger">*</span></label>
+                                            <input type="number" name="subcontract_amount" id="subcontractAmount" class="mf-input" step="0.01" min="0" value="<?= e($contract['subcontract_amount'] ?? '') ?>" placeholder="不超过合同金额">
+                                        </div>
+                                        <div class="mf-form-item">
+                                            <label class="mf-label">分包公司（乙方） <span class="mf-text-danger">*</span></label>
+                                            <input type="text" name="subcontract_party" class="mf-input" value="<?= e($contract['subcontract_party'] ?? '') ?>" placeholder="分包单位名称">
+                                        </div>
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+                                        <div class="mf-form-item">
+                                            <label class="mf-label">分包联系人</label>
+                                            <input type="text" name="subcontract_contact" class="mf-input" value="<?= e($contract['subcontract_contact'] ?? '') ?>">
+                                        </div>
+                                        <div class="mf-form-item">
+                                            <label class="mf-label">分包联系电话</label>
+                                            <input type="text" name="subcontract_phone" class="mf-input" value="<?= e($contract['subcontract_phone'] ?? '') ?>">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <script>
+                            document.getElementById('isSubcontract').addEventListener('change', function() {
+                                document.getElementById('subcontractFields').style.display = this.checked ? '' : 'none';
+                            });
+                            </script>
+                            <?php endif; ?>
+
                             <div style="display:flex;gap:12px;">
-                                <button type="submit" class="mf-btn mf-btn--primary" style="flex:1;">
+                                <button type="submit" name="action" value="save" class="mf-btn mf-btn--primary" style="flex:1;">
                                     <i class="bi bi-save"></i> 保存修改
                                 </button>
-                                <a href="<?= url('import/approve/do.php?id=' . $id) ?>" class="mf-btn mf-btn--success" style="flex:1;" onclick="return confirm('保存并审核通过？')">
-                                    <i class="bi bi-check-circle"></i> 审核通过
-                                </a>
+                                <button type="submit" name="action" value="approve" class="mf-btn mf-btn--success" style="flex:1;" onclick="return confirm('保存并审核通过？')">
+                                    <i class="bi bi-check-circle"></i> 保存并审核通过
+                                </button>
                             </div>
                             <div style="margin-top:12px;">
                                 <a href="<?= url('import/reject/do.php?id=' . $id) ?>" class="mf-btn mf-btn--danger" style="width:100%;" onclick="return confirm('确定驳回删除？')">
@@ -1451,7 +1595,7 @@ class ImportController
     }
 
     /**
-     * 更新合同信息
+     * 更新合同信息（根据 action 参数决定是否审核通过）
      */
     public function update(): void
     {
@@ -1460,6 +1604,7 @@ class ImportController
         $id = (int) ($_POST['id'] ?? 0);
         $biz = (string) ($_POST['biz'] ?? '');
         $bizQuery = $biz && in_array($biz, ['receipt', 'payment'], true) ? '?biz=' . $biz : '';
+        $action = (string) ($_POST['action'] ?? 'save');
 
         if ($id <= 0) {
             $_SESSION['error'] = '无效的合同ID';
@@ -1471,6 +1616,12 @@ class ImportController
             redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
         }
 
+        // 如果 action=approve，调用 updateAndApprove 方法
+        if ($action === 'approve') {
+            $this->updateAndApproveInternal($id, $biz);
+            return;
+        }
+
         // 检查合同编号是否重复（排除当前合同）
         $contractNo = trim($_POST['contract_no'] ?? '');
         $checkStmt = db()->prepare("SELECT id FROM contracts WHERE contract_no = ? AND id != ?");
@@ -1480,28 +1631,64 @@ class ImportController
             redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
         }
 
+        // 分包相关参数（仅收款合同）
+        $paymentType = trim($_POST['payment_type'] ?? 'receipt');
+        $isSubcontract = 0;
+        $subcontractAmount = null;
+        $subcontractParty = '';
+        $subcontractContact = '';
+        $subcontractPhone = '';
+        if ($paymentType === 'receipt' && (int) ($_POST['is_subcontract'] ?? 0) === 1) {
+            $isSubcontract = 1;
+            $subcontractAmount = round((float) ($_POST['subcontract_amount'] ?? 0), 2);
+            $subcontractParty = trim($_POST['subcontract_party'] ?? '');
+            $subcontractContact = trim($_POST['subcontract_contact'] ?? '');
+            $subcontractPhone = trim($_POST['subcontract_phone'] ?? '');
+        }
+
+        $amount = (float) ($_POST['amount'] ?? 0);
+
+        // 分包金额校验
+        if ($isSubcontract === 1 && $subcontractAmount > 0) {
+            if ($subcontractAmount > $amount) {
+                $_SESSION['error'] = '分包金额不能超过合同金额';
+                redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
+            }
+            if ($subcontractParty === '') {
+                $_SESSION['error'] = '请填写分包公司名称';
+                redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
+            }
+        }
+
         $stmt = db()->prepare(
             "UPDATE contracts SET
-                contract_no = ?, project_no = ?, contract_name = ?, customer_name = ?, signer_party = ?,
+                contract_no = ?, project_no = ?, project_name = ?, contract_name = ?, customer_name = ?, signer_party = ?,
                 signer_name = ?, phone = ?, amount = ?, signed_date = ?, effective_date = ?,
-                expiry_date = ?, type_id = ?, payment_type = ?
+                expiry_date = ?, type_id = ?, payment_type = ?, is_subcontract = ?, subcontract_amount = ?,
+                subcontract_party = ?, subcontract_contact = ?, subcontract_phone = ?
             WHERE id = ? AND status = 'pending_review'"
         );
 
         $stmt->execute([
             trim($_POST['contract_no'] ?? ''),
             trim($_POST['project_no'] ?? ''),
+            trim($_POST['project_name'] ?? ''),
             trim($_POST['contract_name'] ?? ''),
             trim($_POST['customer_name'] ?? ''),
             trim($_POST['signer_party'] ?? ''),
             trim($_POST['signer_name'] ?? ''),
             trim($_POST['phone'] ?? ''),
-            (float) ($_POST['amount'] ?? 0),
+            $amount,
             $_POST['signed_date'] ?? null,
             $_POST['effective_date'] ?? null,
             $_POST['expiry_date'] ?? null,
             (int) ($_POST['type_id'] ?? 0) ?: null,
-            $_POST['payment_type'] ?? 'receipt',
+            $paymentType,
+            $isSubcontract,
+            $subcontractAmount,
+            $subcontractParty,
+            $subcontractContact,
+            $subcontractPhone,
             $id,
         ]);
 
@@ -1510,25 +1697,11 @@ class ImportController
     }
 
     /**
-     * 更新并审核通过
+     * 更新并审核通过（内部方法）
      */
-    public function updateAndApprove(): void
+    private function updateAndApproveInternal(int $id, string $biz): void
     {
-        require_permission('import.review.edit');
-
-        $id = (int) ($_POST['id'] ?? 0);
-        $biz = (string) ($_POST['biz'] ?? '');
         $bizQuery = $biz && in_array($biz, ['receipt', 'payment'], true) ? '?biz=' . $biz : '';
-
-        if ($id <= 0) {
-            $_SESSION['error'] = '无效的合同ID';
-            redirect('/import/review.php' . $bizQuery);
-        }
-
-        if (!csrf_verify($_POST['csrf'] ?? '')) {
-            $_SESSION['error'] = '会话已过期';
-            redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
-        }
 
         // 检查合同编号是否重复（排除当前合同）
         $contractNo = trim($_POST['contract_no'] ?? '');
@@ -1539,34 +1712,129 @@ class ImportController
             redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
         }
 
-        // 先更新
+        // 分包相关参数（仅收款合同）
+        $paymentType = trim($_POST['payment_type'] ?? 'receipt');
+        $isSubcontract = 0;
+        $subcontractAmount = null;
+        $subcontractParty = '';
+        $subcontractContact = '';
+        $subcontractPhone = '';
+        if ($paymentType === 'receipt' && (int) ($_POST['is_subcontract'] ?? 0) === 1) {
+            $isSubcontract = 1;
+            $subcontractAmount = round((float) ($_POST['subcontract_amount'] ?? 0), 2);
+            $subcontractParty = trim($_POST['subcontract_party'] ?? '');
+            $subcontractContact = trim($_POST['subcontract_contact'] ?? '');
+            $subcontractPhone = trim($_POST['subcontract_phone'] ?? '');
+        }
+
+        $amount = (float) ($_POST['amount'] ?? 0);
+        $projectNo = trim($_POST['project_no'] ?? '');
+        $projectName = trim($_POST['project_name'] ?? '');
+        $contractName = trim($_POST['contract_name'] ?? '');
+        $customerName = trim($_POST['customer_name'] ?? '');
+        $expiryDate = $_POST['expiry_date'] ?? null;
+
+        // 分包金额校验
+        if ($isSubcontract === 1 && $subcontractAmount > 0) {
+            if ($subcontractAmount > $amount) {
+                $_SESSION['error'] = '分包金额不能超过合同金额';
+                redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
+            }
+            if ($subcontractParty === '') {
+                $_SESSION['error'] = '请填写分包公司名称';
+                redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
+            }
+        }
+
+        // 更新合同（审核通过）
         $stmt = db()->prepare(
             "UPDATE contracts SET
-                contract_no = ?, project_no = ?, contract_name = ?, customer_name = ?, signer_party = ?,
+                contract_no = ?, project_no = ?, project_name = ?, contract_name = ?, customer_name = ?, signer_party = ?,
                 signer_name = ?, phone = ?, amount = ?, signed_date = ?, effective_date = ?,
-                expiry_date = ?, type_id = ?, payment_type = ?, status = 'ongoing'
+                expiry_date = ?, type_id = ?, payment_type = ?, status = 'ongoing',
+                is_subcontract = ?, subcontract_amount = ?, subcontract_party = ?, subcontract_contact = ?, subcontract_phone = ?
             WHERE id = ? AND status = 'pending_review'"
         );
 
         $stmt->execute([
-            trim($_POST['contract_no'] ?? ''),
-            trim($_POST['project_no'] ?? ''),
-            trim($_POST['contract_name'] ?? ''),
-            trim($_POST['customer_name'] ?? ''),
+            $contractNo,
+            $projectNo,
+            $projectName,
+            $contractName,
+            $customerName,
             trim($_POST['signer_party'] ?? ''),
             trim($_POST['signer_name'] ?? ''),
             trim($_POST['phone'] ?? ''),
-            (float) ($_POST['amount'] ?? 0),
+            $amount,
             $_POST['signed_date'] ?? null,
             $_POST['effective_date'] ?? null,
-            $_POST['expiry_date'] ?? null,
+            $expiryDate,
             (int) ($_POST['type_id'] ?? 0) ?: null,
-            $_POST['payment_type'] ?? 'receipt',
+            $paymentType,
+            $isSubcontract,
+            $subcontractAmount,
+            $subcontractParty,
+            $subcontractContact,
+            $subcontractPhone,
             $id,
         ]);
 
+        // 处理分包：自动创建付款子合同
+        if ($paymentType === 'receipt' && $isSubcontract === 1 && $subcontractAmount > 0 && $subcontractParty !== '') {
+            $childContractNo = 'SUB-' . $contractNo;
+            $childContractName = '【分包】' . $contractName;
+            $currentUserId = (int) (current_admin()['id'] ?? 0);
+
+            $stmt = db()->prepare(
+                "INSERT INTO contracts (contract_no, project_no, project_name, contract_name, customer_name, payment_type, signer_party, signer_name, phone, amount, expiry_date, status, parent_contract_id, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+            );
+            $stmt->execute([
+                $childContractNo,
+                $projectNo,
+                $projectName,
+                $childContractName,
+                $customerName,
+                'payment',  // 付款合同
+                $subcontractParty,  // 分包公司作为乙方（付款合同的签约方）
+                $subcontractContact,
+                $subcontractPhone,
+                $subcontractAmount,
+                $expiryDate,
+                'ongoing',
+                $id,  // 关联母合同
+                $currentUserId,
+            ]);
+        }
+
         $_SESSION['success'] = '合同已更新并审核通过';
+        if ($isSubcontract === 1 && $subcontractAmount > 0) {
+            $_SESSION['success'] .= '（已自动创建付款子合同）';
+        }
         redirect('/import/review.php' . $bizQuery);
+    }
+
+    /**
+     * 更新并审核通过（对外接口）
+     */
+    public function updateAndApprove(): void
+    {
+        require_permission('import.review.edit');
+
+        $id = (int) ($_POST['id'] ?? 0);
+        $biz = (string) ($_POST['biz'] ?? '');
+
+        if ($id <= 0) {
+            $bizQuery = $biz && in_array($biz, ['receipt', 'payment'], true) ? '?biz=' . $biz : '';
+            $_SESSION['error'] = '无效的合同ID';
+            redirect('/import/review.php' . $bizQuery);
+        }
+
+        if (!csrf_verify($_POST['csrf'] ?? '')) {
+            $_SESSION['error'] = '会话已过期';
+            redirect('/import/review/detail.php?id=' . $id . ($biz ? '&biz=' . $biz : ''));
+        }
+
+        $this->updateAndApproveInternal($id, $biz);
     }
 
     /**
