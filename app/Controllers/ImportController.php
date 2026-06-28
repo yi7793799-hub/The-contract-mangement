@@ -1786,23 +1786,23 @@ class ImportController
             $currentUserId = (int) (current_admin()['id'] ?? 0);
 
             $stmt = db()->prepare(
-                "INSERT INTO contracts (contract_no, project_no, project_name, contract_name, customer_name, payment_type, signer_party, signer_name, phone, amount, expiry_date, status, parent_contract_id, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+                "INSERT INTO contracts (contract_no, project_no, project_name, contract_name, customer_name, payment_type, signer_party, signer_name, phone, amount, expiry_date, status, parent_contract_id, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
             );
             $stmt->execute([
-                $childContractNo,
-                $projectNo,
-                $projectName,
-                $childContractName,
-                $customerName,
-                'payment',  // 付款合同
-                $subcontractParty,  // 分包公司作为乙方（付款合同的签约方）
-                $subcontractContact,
-                $subcontractPhone,
-                $subcontractAmount,
-                $expiryDate,
-                'ongoing',
-                $id,  // 关联母合同
-                $currentUserId,
+                $childContractNo,       // contract_no
+                $projectNo,             // project_no
+                $projectName,           // project_name
+                $childContractName,     // contract_name
+                $customerName,          // customer_name
+                'payment',              // payment_type
+                $subcontractParty,      // signer_party (分包公司作为乙方)
+                $subcontractContact,    // signer_name (分包联系人)
+                $subcontractPhone,      // phone (分包电话)
+                $subcontractAmount,     // amount (分包金额)
+                $expiryDate,            // expiry_date
+                'ongoing',              // status
+                $id,                    // parent_contract_id (关联母合同)
+                $currentUserId,         // created_by
             ]);
         }
 
