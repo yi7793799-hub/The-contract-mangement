@@ -226,6 +226,40 @@ body.mf-app .mf-dashboard-trend .mf-panel__body {
   border-top: none;
 }
 
+/* 趋势图时间选择器 */
+.mf-panel__header--flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mf-trend-range {
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mf-trend-range input[type="date"] {
+  padding: 4px 8px;
+  font-size: 13px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: #fff;
+  color: #606266;
+  outline: none;
+}
+.mf-trend-range input[type="date"]:focus {
+  border-color: #4caf50;
+}
+.mf-trend-range span {
+  color: #909399;
+  font-size: 13px;
+}
+.mf-trend-range .mf-btn {
+  padding: 4px 12px;
+}
+
 .mf-brand-title {
   font-size: clamp(1.15rem, 2.2vw, 1.45rem);
   letter-spacing: 0.02em;
@@ -277,6 +311,29 @@ body.mf-app .mf-dashboard-trend .mf-panel__body {
   text-align: center;
   border-radius: 8px;
   padding: 0 4px;
+}
+
+/* 表格内标签样式 */
+.mf-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.mf-tag--warning {
+  background: linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%);
+  color: #d48806;
+  border: 1px solid #ffc53d;
+  box-shadow: 0 1px 2px rgba(255, 197, 61, 0.2);
+}
+.mf-tag--warning::before {
+  content: "📦";
+  font-size: 11px;
 }
 
 .mf-sidebar {

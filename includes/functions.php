@@ -269,6 +269,13 @@ function mf_ensure_contract_schema(PDO $pdo): void
     $safeExec("ALTER TABLE contracts ADD COLUMN import_job_id INT UNSIGNED DEFAULT NULL");
     $safeExec("ALTER TABLE contracts ADD COLUMN project_no VARCHAR(64) DEFAULT '' AFTER contract_no");
     $safeExec("ALTER TABLE contracts ADD INDEX idx_project_no (project_no)");
+    $safeExec("ALTER TABLE contracts ADD COLUMN project_name VARCHAR(180) DEFAULT '' AFTER project_no");
+    $safeExec("ALTER TABLE contracts ADD COLUMN is_subcontract TINYINT(1) NOT NULL DEFAULT 0");
+    $safeExec("ALTER TABLE contracts ADD COLUMN subcontract_amount DECIMAL(14,2) DEFAULT NULL");
+    $safeExec("ALTER TABLE contracts ADD COLUMN subcontract_party VARCHAR(180) DEFAULT ''");
+    $safeExec("ALTER TABLE contracts ADD COLUMN subcontract_contact VARCHAR(80) DEFAULT ''");
+    $safeExec("ALTER TABLE contracts ADD COLUMN subcontract_phone VARCHAR(40) DEFAULT ''");
+    $safeExec("ALTER TABLE contracts ADD COLUMN parent_contract_id INT UNSIGNED DEFAULT NULL");
     $safeExec("ALTER TABLE contracts MODIFY COLUMN status ENUM('ongoing','completed','terminated','expiring','pending_review') NOT NULL DEFAULT 'ongoing'");
 
     $safeExec(
@@ -424,6 +431,21 @@ function mf_payment_type_badge(string $paymentType): string
     $bg = $isPayment ? '#fef0f0' : '#f0f9eb';
     $color = $isPayment ? '#f56c6c' : '#67c23a';
     return '<span style="display:inline-block;padding:2px 8px;background:' . $bg . ';color:' . $color . ';border:1px solid ' . $bg . ';">' . $label . '</span>';
+}
+
+/**
+ * 渲染分包标签（如果合同是分包合同）
+ * @param string $contractName 合同名称
+ * @param int $isSubcontract 是否勾选分包标记
+ * @return string 分包标签HTML或空字符串
+ */
+function mf_subcontract_tag(string $contractName, int $isSubcontract): string
+{
+    $isSubcontractChild = strpos($contractName, '【分包】') === 0;
+    if ($isSubcontract === 1 || $isSubcontractChild) {
+        return '<span class="mf-tag mf-tag--warning">分包</span>';
+    }
+    return '';
 }
 
 function mf_contract_status_by_expiry(?string $expiryDate, int $remindDays): string

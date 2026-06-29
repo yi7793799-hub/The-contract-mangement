@@ -233,7 +233,7 @@ ob_start();
         <tr>
           <td><?= e((string) $c['contract_no']) ?></td>
           <td><?= e((string) ($c['project_no'] ?? '-')) ?></td>
-          <td><a href="<?= e(url('contract_view.php?id=' . (int) $c['id'])) ?>"><?= e((string) $c['contract_name']) ?></a></td>
+          <td><a href="<?= e(url('contract_view.php?id=' . (int) $c['id'])) ?>"><?= e((string) $c['contract_name']) ?></a><?= mf_subcontract_tag((string) $c['contract_name'], (int)($c['is_subcontract'] ?? 0)) ?></td>
           <td><?= e((string) ($c['creator_name'] ?? '-')) ?></td>
           <td>¥<?= number_format($total, 2) ?></td>
           <td>¥<?= number_format($done, 2) ?></td>

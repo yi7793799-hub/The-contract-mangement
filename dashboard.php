@@ -84,14 +84,26 @@ while ($pr = $pendingSt->fetch(PDO::FETCH_ASSOC)) {
     }
 }
 
-$chartStart = date('Y-m-d', strtotime('-6 days'));
+// 趋势图时间范围参数（支持自定义日期范围）
+$chartStart = isset($_GET['start_date']) && strtotime($_GET['start_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['start_date'])
+    ? $_GET['start_date']
+    : date('Y-m-d', strtotime('-6 days'));
+$chartEnd = isset($_GET['end_date']) && strtotime($_GET['end_date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['end_date'])
+    ? $_GET['end_date']
+    : $today;
+// 限制范围不超过365天且结束日期不超今天
+$chartStart = max($chartStart, date('Y-m-d', strtotime('-365 days')));
+$chartEnd = min($chartEnd, $today);
+if ($chartStart > $chartEnd) {
+    $chartStart = $chartEnd;
+}
 $st = $pdo->prepare(
     "SELECT DATE(created_at) AS d, COUNT(*) AS c, COALESCE(SUM(amount),0) AS a
      FROM contracts
      WHERE DATE(created_at) >= ? AND DATE(created_at) <= ?" . ($ownOnly ? " AND created_by = ?" : "") . "
      GROUP BY DATE(created_at)"
 );
-$st->execute($ownOnly ? [$chartStart, $today, $currentAdminId] : [$chartStart, $today]);
+$st->execute($ownOnly ? [$chartStart, $chartEnd, $currentAdminId] : [$chartStart, $chartEnd]);
 $byDay = [];
 while ($r = $st->fetch(PDO::FETCH_ASSOC)) {
     $byDay[(string) $r['d']] = ['count' => (int) $r['c'], 'amount' => (float) $r['a']];
@@ -100,7 +112,8 @@ $labels = [];
 $counts = [];
 $amounts = [];
 $ts = strtotime($chartStart);
-while ($ts <= strtotime($today)) {
+$endTs = strtotime($chartEnd);
+while ($ts <= $endTs) {
     $d = date('Y-m-d', $ts);
     $labels[] = date('m-d', $ts);
     $counts[] = (int) (($byDay[$d]['count'] ?? 0));
@@ -220,9 +233,22 @@ $terminatedUrl = url('orders.php?status=terminated');
 </div>
 
 <div class="mf-panel mf-dashboard-trend mf-mt-3">
-    <div class="mf-panel__header">近7日合同趋势</div>
+    <div class="mf-panel__header mf-panel__header--flex">
+        <span>合同趋势</span>
+        <form class="mf-trend-range" method="get" id="mfTrendForm" onsubmit="return mfSubmitTrendForm(event)">
+            <?php foreach ($_GET as $key => $value): ?>
+                <?php if (!in_array($key, ['start_date', 'end_date'], true)): ?>
+                    <input type="hidden" name="<?= e($key) ?>" value="<?= e($value) ?>">
+                <?php endif; ?>
+            <?php endforeach; ?>
+            <input type="date" name="start_date" id="mfTrendStart" value="<?= e($chartStart) ?>" max="<?= e($today) ?>">
+            <span>至</span>
+            <input type="date" name="end_date" id="mfTrendEnd" value="<?= e($chartEnd) ?>" max="<?= e($today) ?>">
+            <button type="submit" class="mf-btn mf-btn--sm mf-btn--primary">查询</button>
+        </form>
+    </div>
     <div class="mf-panel__body mf-p-0">
-        <div id="mfDashboardTrend" class="mf-dashboard-trend__chart" role="img" aria-label="近7日合同趋势"></div>
+        <div id="mfDashboardTrend" class="mf-dashboard-trend__chart" role="img" aria-label="合同趋势"></div>
     </div>
 </div>
 

@@ -198,6 +198,7 @@ $listParams[] = $offset;
 
 $st = $pdo->prepare(
     "SELECT c.*,
+            c.is_subcontract,
             t.name AS type_name,
             CASE WHEN c.expiry_date IS NULL THEN NULL ELSE DATEDIFF(c.expiry_date, CURDATE()) END AS left_days,
             COALESCE((SELECT SUM(tx.amount) FROM contract_transactions tx WHERE tx.contract_id = c.id AND tx.tx_type = c.payment_type), 0) AS done_amount,
@@ -292,11 +293,13 @@ ob_start();
           <td><?= e((string) ($r['project_no'] ?: '-')) ?></td>
           <td><?= e((string) ($r['project_name'] ?: '-')) ?></td>
           <td>
+            <?php $contractName = (string) $r['contract_name']; ?>
             <a
               href="<?= e(url('contract_view.php?id=' . (int) $r['id'] . ($biz !== '' ? '&biz=' . rawurlencode($biz) : ''))) ?>"
-              title="<?= e((string) $r['contract_name']) ?>"
+              title="<?= e($contractName) ?>"
               style="display:inline-block;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom;"
-            ><?= e((string) $r['contract_name']) ?></a>
+            ><?= e($contractName) ?></a>
+            <?= mf_subcontract_tag($contractName, (int) ($r['is_subcontract'] ?? 0)) ?>
           </td>
           <?php if ($biz === ''): ?><td><?= e((string) ($r['type_name'] ?: '-')) ?></td><?php endif; ?>
           <?php if ($biz === ''): ?><td><?= mf_payment_type_badge((string) ($r['payment_type'] ?? 'receipt')) ?></td><?php endif; ?>
